@@ -22,27 +22,6 @@ module lab1(input logic       clk,
   
 endmodule
 
-module controller(input logic        clk,
-		  input logic [3:0]  KEY,
-		  input logic [7:0]  dout,
-		  output logic [3:0] a,
-		  output logic [7:0] din,
-		  output logic 	     we);
-
-   // Replace these with your code
-   assign a = KEY;
-   assign din = {KEY, ~KEY};
-   assign we = 1'b1;
-   
-endmodule
-		  
-module hex7seg(input logic [3:0] a,
-	       output logic [7:0] y);
-
-   assign y = {a,a}; // Replace this with your code
-   
-endmodule
-
 // 16 X 8 synchronous RAM with old data read-during-write behavior
 module memory(input logic        clk,
 	      input logic [3:0]  a,
