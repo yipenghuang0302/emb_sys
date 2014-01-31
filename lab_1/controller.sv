@@ -12,20 +12,22 @@ module controller(
 	logic write_en;
 
 	// sequential logic backing a, addr
-	// TODO: what if addr is already 0 or 15
 	always_ff @(posedge clk)
-		if (~KEY[3])
-			addr <= addr + 4'd1; //increment address
-		else if (~KEY[2])
-			addr <= addr - 4'd1; //decrement address
+		if (~KEY[3]) // increment
+			if (addr == 4'd15) addr <= 4'd0; // go to zero
+			else addr <= addr + 4'd1; // increment address
+		else if (~KEY[2]) // decrement
+			if (addr == 4'd0) addr <= 4'd15; // go to top
+			else addr <= addr - 4'd1; // decrement address
 
 	// sequential logic backing din, data
-	// TODO: what if addr is already 0 or 127
 	always_ff @(posedge clk)
-		if (~KEY[1])
-			data <= dout + 8'd1; //increment data
-		else if (~KEY[0])
-			data <= dout - 8'd1; //decrement data
+		if (~KEY[1]) // increment
+			if (data == 8'd127) data <= 8'd0; // go to zero
+			else data <= dout + 8'd1; // increment data
+		else if (~KEY[0]) // decrement
+			if (data == 8'd0) data <= 8'd127; // go to top
+			else data <= dout - 8'd1; //decrement data
 
 	// sequential logic backing we
 	// TODO: double check timing
