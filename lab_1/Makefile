@@ -1,5 +1,5 @@
 TARFILES = Makefile lab1.qpf lab1.qsf SoCKit_Top.sv VGA_LED_Emulator.sv \
-	lab1.sdc lab1.sv
+	lab1.sdc controller.sv hex7seg.sv lab1.sv
 
 lab1.tar.gz : $(TARFILES)
 	mkdir lab1
