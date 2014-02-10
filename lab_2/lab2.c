@@ -32,7 +32,7 @@ void *network_thread_f(void *);
 
 int main()
 {
-  int err, col;
+  int err, col, row;
 
   struct sockaddr_in serv_addr = { AF_INET, SERVER_PORT, { SERVER_HOST } };
 
@@ -44,6 +44,9 @@ int main()
     fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
     exit(1);
   }
+
+	for (row = 0; row < 47; row++)
+		fbputspace(row);
 
   /* Draw rows of asterisks across the top and bottom of the screen */
   for (col = 0 ; col < 128 ; col++) {

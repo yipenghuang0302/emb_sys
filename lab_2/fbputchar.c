@@ -92,6 +92,13 @@ void fbputs(const char *s, int row, int col)
   while ((c = *s++) != 0) fbputchar(c, row, col++);
 }
 
+
+void fbputspace(int row){
+  int col=0;
+  while (col++ < 128)
+		fbputchar(' ', row, col);
+}
+
 /* 8 X 16 console font from /lib/kbd/consolefonts/lat0-16.psfu.gz
 
 od --address-radix=n --width=16 -v -t x1 -j 4 -N 2048 lat0-16.psfu
