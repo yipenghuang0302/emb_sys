@@ -51,7 +51,7 @@ int main()
   /* Draw rows of asterisks across the top and bottom of the screen */
   for (col = 0 ; col < 128 ; col++) {
     fbputchar('*', 0, col);
-    fbputchar('*', 46, col);
+    fbputchar('*', 45, col);
   }
 
   fbputs("Hello CSEE 4840 World!", 4, 10);
