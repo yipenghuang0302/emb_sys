@@ -32,6 +32,9 @@ uint8_t endpoint_address;
 pthread_t network_thread;
 void *network_thread_f(void *);
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on fb and disp_row*/
+int disp_row = 0; /*row to print next chat*/
+
 int main()
 {
 	int err, col, row;
@@ -238,9 +241,9 @@ void *network_thread_f(void *ignored)
 {
 	char recvBuf[BUFFER_SIZE];
 	int n;
-	int row=0;
 	/* Receive data */
 	while ( (n = read(sockfd, &recvBuf, BUFFER_SIZE - 1)) > 0 ) {
+		pthread_mutex_lock(&mutex); /* Grab the lock */
 		/*scroll the screen if it is already full*/
 		if (row==SEPARATOR) {
 			fbscroll(SEPARATOR);
@@ -250,7 +253,7 @@ void *network_thread_f(void *ignored)
 		printf("%s", recvBuf);
 		fbputs(recvBuf, row, 0);
 		row++;
+		pthread_mutex_unlock(&mutex); /* Release the lock */
 	}
-
 	return NULL;
 }
