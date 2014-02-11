@@ -8,9 +8,12 @@
 #define FBOPEN_BPP -5          /* Unexpected bits-per-pixel */
 
 extern int fbopen(void);
+
 extern void fbputchar(char, int, int);
 extern void fbputspace(int);
 extern void fbputs(const char *, int, int);
+
+extern void fbrowcopy(int, int);
 extern void fbscroll(int); /*scroll contents up by one line, leaving lines beyond specified integer intact*/
 
 #endif

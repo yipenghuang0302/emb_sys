@@ -102,25 +102,25 @@ void fbputs(const char *s, int row, int col)
 }
 
 /*
- * scroll contents up by one line,
- * leaving lines beyond specified integer intact
- */
-void scroll() {
-	for (int row=0; row<last; row++) {
-		fbrowcopy(row, row+1);
-	}
-}
-
-/*
- * copies to a row from the next row.
+ * copies pixels from one row to another.
  */
 void fbrowcopy(int source, int dest) {
 	for (int pixel=0; pixel<FONT_HEIGHT; pixel++){
 		memcpy(
-			framebuffer + (row * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length,
-			framebuffer + ((row+1) * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length,
+			framebuffer + (dest * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length, // destination
+			framebuffer + (source * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length, // source
 			fb_finfo.line_length
 		);
+	}
+}
+
+/*
+ * scroll contents up by one line,
+ * leaving lines beyond specified integer intact
+ */
+void fbscroll(int last) {
+	for (int row=0; row<last; row++) {
+		fbrowcopy(row+1, row);
 	}
 }
 
