@@ -19,6 +19,7 @@
  *
  * http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html
  * http://www.thegeekstuff.com/2011/12/c-socket-programming/
+ * http://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/socket.html
  * 
  */
 
@@ -45,8 +46,8 @@ int main()
     exit(1);
   }
 
-	for (row = 0; row < 47; row++)
-		fbputspace(row);
+  for (row = 0; row < 47; row++)
+    fbputspace(row);
 
   /* Draw rows of asterisks across the top and bottom of the screen */
   for (col = 0 ; col < 128 ; col++) {
@@ -109,11 +110,13 @@ void *network_thread_f(void *ignored)
 {
   char recvBuf[BUFFER_SIZE];
   int n;
+  int row=0;
   /* Receive data */
   while ( (n = read(sockfd, &recvBuf, BUFFER_SIZE - 1)) > 0 ) {
     recvBuf[n] = '\0';
     printf("%s", recvBuf);
-    fbputs(recvBuf, 8, 0);
+    fbputs(recvBuf, row, 0);
+	row++;
   }
 
   return NULL;

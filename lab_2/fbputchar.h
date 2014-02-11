@@ -1,5 +1,5 @@
 #ifndef _FBPUTCHAR_H
-#  define _FBPUTCHAR_H
+#define _FBPUTCHAR_H
 
 #define FBOPEN_DEV -1          /* Couldn't open the device */
 #define FBOPEN_FSCREENINFO -2  /* Couldn't read the fixed info */
@@ -9,7 +9,8 @@
 
 extern int fbopen(void);
 extern void fbputchar(char, int, int);
-extern void fbputs(const char *, int, int);
 extern void fbputspace(int);
+extern void fbputs(const char *, int, int);
+extern void fbscroll(int); /*scroll contents up by one line, leaving lines beyond specified integer intact*/
 
 #endif

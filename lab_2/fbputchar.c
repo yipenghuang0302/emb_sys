@@ -83,6 +83,15 @@ void fbputchar(char c, int row, int col)
 }
 
 /*
+ * Draw a row of spaces.
+ */
+void fbputspace(int row){
+  int col=0;
+  while (col++ < 128)
+    fbputchar(' ', row, col);
+}
+
+/*
  * Draw the given string at the given row/column.
  * String must fit on a single line: wrap-around is not handled.
  */
@@ -92,11 +101,27 @@ void fbputs(const char *s, int row, int col)
   while ((c = *s++) != 0) fbputchar(c, row, col++);
 }
 
+/*
+ * scroll contents up by one line,
+ * leaving lines beyond specified integer intact
+ */
+void scroll() {
+	for (int row=0; row<last; row++) {
+		fbrowcopy(row, row+1);
+	}
+}
 
-void fbputspace(int row){
-  int col=0;
-  while (col++ < 128)
-		fbputchar(' ', row, col);
+/*
+ * copies to a row from the next row.
+ */
+void fbrowcopy(int source, int dest) {
+	for (int pixel=0; pixel<FONT_HEIGHT; pixel++){
+		memcpy(
+			framebuffer + (row * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length,
+			framebuffer + ((row+1) * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length,
+			fb_finfo.line_length
+		);
+	}
 }
 
 /* 8 X 16 console font from /lib/kbd/consolefonts/lat0-16.psfu.gz
