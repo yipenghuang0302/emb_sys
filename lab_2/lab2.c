@@ -13,6 +13,7 @@
 #define SERVER_PORT htons(42000)
 
 #define BUFFER_SIZE 128
+#define SEPARATOR 45
 
 /*
  * References:
@@ -53,7 +54,7 @@ int main()
 	/* Draw rows of asterisks across the top and bottom of the screen */
 	for (col = 0 ; col < 128 ; col++) {
 		fbputchar('*', 0, col);
-		fbputchar('*', 45, col);
+		fbputchar('*', SEPARATOR, col);
 	}
 
 	fbputs("Hello CSEE 4840 World!", 4, 10);
@@ -240,6 +241,11 @@ void *network_thread_f(void *ignored)
 	int row=0;
 	/* Receive data */
 	while ( (n = read(sockfd, &recvBuf, BUFFER_SIZE - 1)) > 0 ) {
+		/*scroll the screen if it is already full*/
+		if (row==SEPARATOR) {
+			fbscroll(SEPARATOR);
+			row--;
+		}
 		recvBuf[n] = '\0';
 		printf("%s", recvBuf);
 		fbputs(recvBuf, row, 0);
@@ -248,4 +254,3 @@ void *network_thread_f(void *ignored)
 
 	return NULL;
 }
-
