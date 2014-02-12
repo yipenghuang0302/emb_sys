@@ -1,3 +1,5 @@
+#include <string.h>
+
 #ifndef _FBPUTCHAR_H
 #define _FBPUTCHAR_H
 
