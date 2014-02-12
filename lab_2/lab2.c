@@ -51,7 +51,7 @@ int main()
 	}
 
 	/* Clear the framebuffer */
-	for (row = 0; row < 47; row++)
+	for (row = 0; row < 48; row++)
 		fbputspace(row);
 
 	/* Draw rows of asterisks across the top and bottom of the screen */
@@ -89,7 +89,12 @@ int main()
 	char firstkey, seckey;
 	int modkey = 1;//unset if the keypress is not an ASCII char
 	col = 0;//we'll start typing at left-hand edge of screen
-	row = 46;//we'll also start right below the second line of asterisks
+	row = SEPARATOR + 1;//we'll also start right below the second line of asterisks
+	char sendbuf[1024];
+	int spot;
+	for (spot = 0; spot < 1024; spot++)
+		sendbuf[spot] = 0;
+	spot = 0;
 
 	/* Look for and handle keypresses */
 	for (;;) {
@@ -101,7 +106,8 @@ int main()
 			// Converting USB codes to ASCII
 			/* Do we have to do more than the first keypress???*/
 			firstkey = packet.keycode[0];
-			if (packet.modifiers == USB_LSHIFT || packet.modifiers == USB_RSHIFT){
+			if (packet.modifiers & USB_LSHIFT || packet.modifiers & USB_RSHIFT){
+				printf("%s\n", "SHIFT");
 				if (firstkey >= 4 && firstkey <= 29)
 					firstkey += 61;
 				else{
@@ -155,13 +161,17 @@ int main()
 				}
 			}
 			else{
-				if (firstkey >= 4 && firstkey <= 29)
+				if (firstkey >= 4 && firstkey <= 29){
+					printf("Got the ascii value %c\n", firstkey+93);
 					firstkey += 93;
+				}
 				else if (firstkey >= 30 && firstkey <= 38)
 					firstkey += 19;
 				else{
 					switch(firstkey){
 						case 39: firstkey = '0';
+										 break;
+						case 44: firstkey = ' ';
 										 break;
 						case 45: firstkey = '-';
 										 break;
@@ -185,45 +195,71 @@ int main()
 										 break;
 						case 56: firstkey = '/';
 										 break;
+						case 0: break;
 						default: modkey = 0;
 										 break;
+					}
 				}
-			}
 
-			if (modkey){
-				printf("%c\n", firstkey);
-				fbputchar(firstkey, row, col++);
-				//wraparound
-				if (col == 128){
-					if (row == 47)
-						row--;
-					else
-						row++;
-					col = 0;
+				if (modkey){
+					printf("%c\n", firstkey);
+					if (firstkey){
+						fbputchar(firstkey, row, col++);
+						sendbuf[spot++] = firstkey;
+					}
+					//wraparound
+					if (col == 128){
+						if (row == 47)
+							row--;
+						else
+							row++;
+						col = 0;
+					}
+					fbputchar('_', row, col);//cursor to mark where we're typing
 				}
-				fbputchar('_', row, col);//cursor to mark where we're typing
-			}
-			//Deal with non-ASCII keystrokes
-			else{
-				//backspace
-				if (firstkey == 42){
-					fbputchar(' ', row, col--);
-					fbputchar('_', row, col);
+				//Deal with non-ASCII keystrokes
+				else{
+					//backspace
+					if (firstkey == 42){
+						fbputchar(' ', row, col--);
+						fbputchar('_', row, col);
+					}
+					//TODO: How to tackle arrow keys? 
+					//We want the _ cursor over an ascii character while also showing the cursor, right?
+
+					//TODO: Enter
+					if (firstkey == 40){
+						sendbuf[spot]='\0';
+						write(sockfd, sendbuf, spot-1);
+						//clear user's framebuffer space
+						fbputspace(46);
+						fbputspace(47);
+
+						//Print to "chat" section of screen
+						pthread_mutex_lock(&mutex); /* Grab the lock */
+						/*scroll the screen if it is already full*/
+						if (disp_row==SEPARATOR) {
+							fbscroll(SEPARATOR);
+							disp_row--;
+						}
+						printf("%s", sendbuf);
+						fbputs(sendbuf, disp_row, 0);
+						disp_row++;
+						pthread_mutex_unlock(&mutex); /* Release the lock */
+						spot = 0;
+					}
+					modkey = 1;
 				}
-				//TODO: How to tackle arrow keys? 
-				//We want the _ cursor over an ascii character while also showing the cursor, right?
-				
-				//TODO: Enter
-			}
 
 
 
-			sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0],
-					packet.keycode[1]);
-			printf("%s\n", keystate);
-			fbputs(keystate, 6, 0);
-			if (packet.keycode[0] == 0x29) { /* ESC pressed? */
-				break;
+				sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0],
+						packet.keycode[1]);
+				printf("%s\n", keystate);
+				fbputs(keystate, 6, 0);
+				if (packet.keycode[0] == 0x29) { /* ESC pressed? */
+					break;
+				}
 			}
 		}
 	}
@@ -245,14 +281,14 @@ void *network_thread_f(void *ignored)
 	while ( (n = read(sockfd, &recvBuf, BUFFER_SIZE - 1)) > 0 ) {
 		pthread_mutex_lock(&mutex); /* Grab the lock */
 		/*scroll the screen if it is already full*/
-		if (row==SEPARATOR) {
+		if (disp_row==SEPARATOR) {
 			fbscroll(SEPARATOR);
-			row--;
+			disp_row--;
 		}
 		recvBuf[n] = '\0';
 		printf("%s", recvBuf);
-		fbputs(recvBuf, row, 0);
-		row++;
+		fbputs(recvBuf, disp_row, 0);
+		disp_row++;
 		pthread_mutex_unlock(&mutex); /* Release the lock */
 	}
 	return NULL;
