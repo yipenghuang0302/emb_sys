@@ -60,7 +60,7 @@ int main()
 		fbputchar('*', SEPARATOR, col);
 	}
 
-	fbputs("Hello CSEE 4840 World!", 4, 10);
+	//fbputs("Hello CSEE 4840 World!", 4, 10);
 
 	/* Open the keyboard */
 	if ( (keyboard = openkeyboard(&endpoint_address)) == NULL ) {
@@ -107,9 +107,9 @@ int main()
 			/* Do we have to do more than the first keypress???*/
 			firstkey = packet.keycode[0];
 			if (packet.modifiers & USB_LSHIFT || packet.modifiers & USB_RSHIFT){
-				printf("%s\n", "SHIFT");
-				if (firstkey >= 4 && firstkey <= 29)
+				if (firstkey >= 4 && firstkey <= 29){
 					firstkey += 61;
+				}
 				else{
 					// DO WE ALSO HAVE TO DO KEYPAD?
 					switch(firstkey){
@@ -132,6 +132,8 @@ int main()
 						case 38: firstkey = '(';
 										 break;
 						case 39: firstkey = ')';
+										 break;
+						case 44: firstkey = ' ';
 										 break;
 						case 45: firstkey = '_';
 										 break;
@@ -162,7 +164,6 @@ int main()
 			}
 			else{
 				if (firstkey >= 4 && firstkey <= 29){
-					printf("Got the ascii value %c\n", firstkey+93);
 					firstkey += 93;
 				}
 				else if (firstkey >= 30 && firstkey <= 38)
@@ -200,66 +201,70 @@ int main()
 										 break;
 					}
 				}
+			}
 
-				if (modkey){
-					printf("%c\n", firstkey);
-					if (firstkey){
-						fbputchar(firstkey, row, col++);
-						sendbuf[spot++] = firstkey;
-					}
-					//wraparound
-					if (col == 128){
-						if (row == 47)
-							row--;
-						else
-							row++;
-						col = 0;
-					}
-					fbputchar('_', row, col);//cursor to mark where we're typing
+			if (modkey){
+				if (firstkey){
+					fbputchar(firstkey, row, col++);
+					sendbuf[spot++] = firstkey;
 				}
-				//Deal with non-ASCII keystrokes
-				else{
-					//backspace
-					if (firstkey == 42){
-						fbputchar(' ', row, col--);
-						fbputchar('_', row, col);
-					}
-					//TODO: How to tackle arrow keys? 
-					//We want the _ cursor over an ascii character while also showing the cursor, right?
-
-					//TODO: Enter
-					if (firstkey == 40){
-						sendbuf[spot]='\0';
-						write(sockfd, sendbuf, spot-1);
-						//clear user's framebuffer space
-						fbputspace(46);
-						fbputspace(47);
-
-						//Print to "chat" section of screen
-						pthread_mutex_lock(&mutex); /* Grab the lock */
-						/*scroll the screen if it is already full*/
-						if (disp_row==SEPARATOR) {
-							fbscroll(SEPARATOR);
-							disp_row--;
-						}
-						printf("%s", sendbuf);
-						fbputs(sendbuf, disp_row, 0);
-						disp_row++;
-						pthread_mutex_unlock(&mutex); /* Release the lock */
-						spot = 0;
-					}
-					modkey = 1;
+				//wraparound
+				if (col == 128){
+					if (row == 47)
+						row--;
+					else
+						row++;
+					col = 0;
 				}
-
-
-
-				sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0],
-						packet.keycode[1]);
-				printf("%s\n", keystate);
-				fbputs(keystate, 6, 0);
-				if (packet.keycode[0] == 0x29) { /* ESC pressed? */
-					break;
+				fbputchar('_', row, col);//cursor to mark where we're typing
+			}
+			//Deal with non-ASCII keystrokes
+			else{
+				//backspace
+				if (firstkey == 42){
+					sendbuf[spot--] = ' ';
+					fbputchar(' ', row, col--);
+					fbputchar('_', row, col);
 				}
+				//TODO: How to tackle arrow keys? 
+				//We want the _ cursor over an ascii character while also showing the cursor, right?
+
+				//TODO: Enter
+				if (firstkey == 40){
+					sendbuf[spot]='\0';
+					write(sockfd, sendbuf, spot-1);
+					//clear user's framebuffer space
+					fbputspace(46);
+					fbputspace(47);
+
+					//Print to "chat" section of screen
+					pthread_mutex_lock(&mutex); /* Grab the lock */
+					/*scroll the screen if it is already full*/
+					if (disp_row==SEPARATOR) {
+						fbscroll(SEPARATOR);
+						disp_row--;
+					}
+					fbputs(sendbuf, disp_row, 0);
+					disp_row++;
+					pthread_mutex_unlock(&mutex); /* Release the lock */
+
+					//Reset user's text space
+					spot = 0;
+					row = SEPARATOR+1;
+					col = 0;
+				}
+				modkey = 1;
+			}
+
+
+			/*
+				 sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0],
+				 packet.keycode[1]);
+				 printf("%s\n", keystate);
+				 fbputs(keystate, 6, 0);
+			 */
+			if (packet.keycode[0] == 0x29) { /* ESC pressed? */
+				break;
 			}
 		}
 	}
