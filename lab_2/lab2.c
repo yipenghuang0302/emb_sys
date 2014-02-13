@@ -34,7 +34,10 @@ struct libusb_device_handle *keyboard;
 uint8_t endpoint_address;
 
 pthread_t network_thread;
-void *network_thread_f(void *);
+void *network_thread_f();
+pthread_t cursor_thread;
+void *cursor_thread_f();
+void chat_print();
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on fb and chat_row*/
 int chat_row = 0; /*row to print next chat*/
@@ -47,8 +50,7 @@ int main()
 	/* Open the keyboard */
 	struct usb_keyboard_packet packet;
 	int transferred;
-//	char keystate[12];
-	char firstkey, seckey;
+	char firstkey;
 	int is_ascii = 1; /*unset if the keypress is not an ASCII char*/
 	if ( (keyboard = openkeyboard(&endpoint_address)) == NULL ) {
 		fprintf(stderr, "Did not find a keyboard\n");
@@ -92,15 +94,14 @@ int main()
 	/* Start the network thread */
 	pthread_create(&network_thread, NULL, network_thread_f, NULL);
 
+	/* Start the cursor thread */
+	pthread_create(&cursor_thread, NULL, cursor_thread_f, NULL);
+
 	user_col = 0; /*we'll start typing at left-hand edge of screen*/
 	user_row = SEPARATOR + 1; /*we'll also start right below the second line of asterisks*/
 
 	int user_spot = 0;
   	memset (user_buf, '\0', USER_BUF_SIZE);
-/*	for (user_spot = 0; user_spot < USER_BUF_SIZE; user_spot++)
-		user_buf[user_spot] = 0;
-	user_spot = 0;
-*/
 
 	/* Look for and handle keypresses */
 	for (;;) {
@@ -239,26 +240,26 @@ int main()
 				//TODO: How to tackle arrow keys? 
 				//We want the _ cursor over an ascii character while also showing the cursor, right?
 
-				//TODO: Enter
 				if (firstkey == 40) {
 					user_buf[user_spot]='\0';
 					write(sockfd, user_buf, user_spot-1);
 
 					//clear user's framebuffer space
-					int clear_index = SEPARATOR+1;
-					for (clear_index; clear_index<ROW_MAX; clear_index++)
+					int clear_index;
+					for (clear_index = SEPARATOR+1; clear_index<ROW_MAX; clear_index++)
 						fbputspace(clear_index);
 
 					//Print to "chat" section of screen
-					pthread_mutex_lock(&mutex); /* Grab the lock */
-					/*scroll the screen if it is already full*/
-					if (chat_row==SEPARATOR) {
-						fbscroll(SEPARATOR);
-						chat_row--;
+					int print_spot = 0;
+					while (print_spot < user_spot) {
+						if (user_spot-print_spot > CHAT_BUF_SIZE-1) {
+							chat_print(user_buf+user_spot, CHAT_BUF_SIZE-1);
+							print_spot += CHAT_BUF_SIZE-1;
+						}
+						else {
+							chat_print(user_buf+user_spot, user_spot-print_spot);
+						}
 					}
-					fbputs(user_buf, chat_row, 0);
-					chat_row++;
-					pthread_mutex_unlock(&mutex); /* Release the lock */
 
 					//Reset user's text space
 					user_spot = 0;
@@ -267,7 +268,6 @@ int main()
 				}
 				is_ascii = 1;
 			}
-
 
 			/*
 				 sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0],
@@ -281,32 +281,41 @@ int main()
 		}
 	}
 
-	/* Terminate the network thread */
+	/* Terminate and wait for the other threads */
 	pthread_cancel(network_thread);
-
-	/* Wait for the network thread to finish */
 	pthread_join(network_thread, NULL);
+	pthread_cancel(cursor_thread);
+	pthread_join(cursor_thread, NULL);
 
 	return 0;
 }
 
-void *network_thread_f(void *ignored)
-{
-	char recvBuf[CHAT_BUF_SIZE];
+void *cursor_thread_f() {
+	/*Pseudocode*/
+	/*Share read access to user_buf and user_spot with keyboard thread*/
+	/*Every second, write alternating cursor and character to user_spot*/
+}
+
+void *network_thread_f() {
+	char chat_buf[CHAT_BUF_SIZE];
 	int n;
 	/* Receive data */
-	while ( (n = read(sockfd, &recvBuf, CHAT_BUF_SIZE - 1)) > 0 ) {
-		pthread_mutex_lock(&mutex); /* Grab the lock */
-		/*scroll the screen if it is already full*/
-		if (chat_row==SEPARATOR) {
-			fbscroll(SEPARATOR);
-			chat_row--;
-		}
-		recvBuf[n] = '\0';
-		printf("%s", recvBuf);
-		fbputs(recvBuf, chat_row, 0);
-		chat_row++;
-		pthread_mutex_unlock(&mutex); /* Release the lock */
+	while ( (n = read(sockfd, &chat_buf, CHAT_BUF_SIZE - 1)) > 0 ) {
+		chat_print(chat_buf, n);
 	}
 	return NULL;
+}
+
+void chat_print(char *chat_buf, int size) {
+	pthread_mutex_lock(&mutex); /* Grab the lock */
+	/*scroll the screen if it is already full*/
+	if (chat_row==SEPARATOR) {
+		fbscroll(SEPARATOR);
+		chat_row--;
+	}
+	chat_buf[size] = '\0';
+	printf("%s", chat_buf);
+	fbputs(chat_buf, chat_row, 0);
+	chat_row++;
+	pthread_mutex_unlock(&mutex); /* Release the lock */
 }

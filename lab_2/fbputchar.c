@@ -30,7 +30,7 @@ unsigned char *framebuffer;
 static unsigned char font[];
 
 /*
- * Open the framebuffer to prepare it to be written to.  Returns 0 on success
+ * Open the framebuffer to prepare it to be written to. Returns 0 on success
  * or one of the FBOPEN_... return codes if something went wrong.
  */
 int fbopen()
@@ -105,13 +105,30 @@ void fbputs(const char *s, int row, int col)
  * copies pixels from one row to another.
  */
 void fbrowcopy(int source, int dest) {
-	int pixel;
-	for (pixel=0; pixel<FONT_HEIGHT; pixel++){
+/*	int x, y;
+	unsigned char *pixel;
+	int col;
+	for (col=0; col<128; col++) {
+		unsigned char *s_left = framebuffer + (source * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length + (col * FONT_WIDTH + fb_vinfo.xoffset) * BITS_PER_PIXEL / 8;
+		unsigned char *d_left = framebuffer + (dest * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length + (col * FONT_WIDTH + fb_vinfo.xoffset) * BITS_PER_PIXEL / 8;
+		for (y = 0 ; y < FONT_HEIGHT ; y++, left += fb_finfo.line_length) {
+			pixel = left;
+			for (x = 0 ; x < FONT_WIDTH ; x++, pixel += 4)
+				if (pixels & 0x80) {	
+					pixel[0] = 255;
+					pixel[1] = 255;
+					pixel[2] = 255;
+					pixel[3] = 0;
+				}
+		}
+	}
+*/	int pixel;
+	for (pixel=0; pixel< 128 * FONT_WIDTH * BITS_PER_PIXEL / 8; pixel++){
 		memcpy(
-				framebuffer + (dest * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length, // destination
-				framebuffer + (source * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length, // source
-				fb_finfo.line_length
-		      );
+			framebuffer + (dest * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length, // destination
+			framebuffer + (source * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length, // source
+			sizeof(char)
+		);
 	}
 }
 
