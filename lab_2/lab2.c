@@ -12,8 +12,12 @@
 #define SERVER_HOST IPADDR(192,168,1,1)
 #define SERVER_PORT htons(42000)
 
-#define BUFFER_SIZE 128
-#define SEPARATOR 45
+#define CHAT_BUF_SIZE 128
+#define USER_BUF_SIZE 1024
+
+#define SEPARATOR 45 /*location of bar separating chat and user space*/
+#define ROW_MAX 48
+#define COL_MAX 128
 
 /*
  * References:
@@ -32,43 +36,45 @@ uint8_t endpoint_address;
 pthread_t network_thread;
 void *network_thread_f(void *);
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on fb and disp_row*/
-int disp_row = 0; /*row to print next chat*/
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on fb and chat_row*/
+int chat_row = 0; /*row to print next chat*/
 
 int main()
 {
-	int err, col, row;
 
-	struct sockaddr_in serv_addr = { AF_INET, SERVER_PORT, { SERVER_HOST } };
+	int err;
 
+	/* Open the keyboard */
 	struct usb_keyboard_packet packet;
 	int transferred;
-	char keystate[12];
+//	char keystate[12];
+	char firstkey, seckey;
+	int is_ascii = 1; /*unset if the keypress is not an ASCII char*/
+	if ( (keyboard = openkeyboard(&endpoint_address)) == NULL ) {
+		fprintf(stderr, "Did not find a keyboard\n");
+		exit(1);
+	}
 
+	/*initiate framebuffer*/
+	int user_col, user_row;
 	if ((err = fbopen()) != 0) {
 		fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
 		exit(1);
 	}
 
 	/* Clear the framebuffer */
-	for (row = 0; row < 48; row++)
-		fbputspace(row);
+	for (user_row = 0; user_row < ROW_MAX; user_row++)
+		fbputspace(user_row);
 
 	/* Draw rows of asterisks across the top and bottom of the screen */
-	for (col = 0 ; col < 128 ; col++) {
-		fbputchar('*', 0, col);
-		fbputchar('*', SEPARATOR, col);
-	}
-
-	//fbputs("Hello CSEE 4840 World!", 4, 10);
-
-	/* Open the keyboard */
-	if ( (keyboard = openkeyboard(&endpoint_address)) == NULL ) {
-		fprintf(stderr, "Did not find a keyboard\n");
-		exit(1);
+	for (user_col = 0 ; user_col < COL_MAX ; user_col++) {
+		fbputchar('*', 0, user_col);
+		fbputchar('*', SEPARATOR, user_col);
 	}
 
 	/* Create a TCP communications socket */
+	struct sockaddr_in serv_addr = { AF_INET, SERVER_PORT, { SERVER_HOST } };
+	char user_buf[USER_BUF_SIZE];
 	if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
 		fprintf(stderr, "Error: Could not create socket\n");
 		exit(1);
@@ -86,15 +92,15 @@ int main()
 	/* Start the network thread */
 	pthread_create(&network_thread, NULL, network_thread_f, NULL);
 
-	char firstkey, seckey;
-	int modkey = 1;//unset if the keypress is not an ASCII char
-	col = 0;//we'll start typing at left-hand edge of screen
-	row = SEPARATOR + 1;//we'll also start right below the second line of asterisks
-	char sendbuf[1024];
-	int spot;
-	for (spot = 0; spot < 1024; spot++)
-		sendbuf[spot] = 0;
-	spot = 0;
+	user_col = 0; /*we'll start typing at left-hand edge of screen*/
+	user_row = SEPARATOR + 1; /*we'll also start right below the second line of asterisks*/
+
+	int user_spot = 0;
+  	memset (user_buf, '\0', USER_BUF_SIZE);
+/*	for (user_spot = 0; user_spot < USER_BUF_SIZE; user_spot++)
+		user_buf[user_spot] = 0;
+	user_spot = 0;
+*/
 
 	/* Look for and handle keypresses */
 	for (;;) {
@@ -106,13 +112,15 @@ int main()
 			// Converting USB codes to ASCII
 			/* Do we have to do more than the first keypress???*/
 			firstkey = packet.keycode[0];
-			if (packet.modifiers & USB_LSHIFT || packet.modifiers & USB_RSHIFT){
-				if (firstkey >= 4 && firstkey <= 29){
+			if ( packet.modifiers & USB_LSHIFT || packet.modifiers & USB_RSHIFT ) {
+
+				/*Capital letters*/
+				if (firstkey >= 4 && firstkey <= 29) {
 					firstkey += 61;
 				}
 				else{
 					// DO WE ALSO HAVE TO DO KEYPAD?
-					switch(firstkey){
+					switch(firstkey) {
 						case 30: firstkey = '!';  
 										 break;
 						case 31: firstkey = '@';
@@ -157,19 +165,21 @@ int main()
 										 break;
 						case 56: firstkey = '?';
 										 break;
-						default: modkey = 0;
+						default: is_ascii = 0;
 										 break;
 					}
 				}
 			}
+
+			/*Lowercase letters*/
 			else{
-				if (firstkey >= 4 && firstkey <= 29){
+				if (firstkey >= 4 && firstkey <= 29) {
 					firstkey += 93;
 				}
 				else if (firstkey >= 30 && firstkey <= 38)
 					firstkey += 19;
 				else{
-					switch(firstkey){
+					switch(firstkey) {
 						case 39: firstkey = '0';
 										 break;
 						case 44: firstkey = ' ';
@@ -197,63 +207,65 @@ int main()
 						case 56: firstkey = '/';
 										 break;
 						case 0: break;
-						default: modkey = 0;
+						default: is_ascii = 0;
 										 break;
 					}
 				}
 			}
 
-			if (modkey){
-				if (firstkey){
-					fbputchar(firstkey, row, col++);
-					sendbuf[spot++] = firstkey;
+			if (is_ascii) {
+				/*print to user space and accumulate*/
+				if (firstkey) {
+					fbputchar(firstkey, user_row, user_col++);
+					user_buf[user_spot++] = firstkey;
 				}
 				//wraparound
-				if (col == 128){
-					if (row == 47)
-						row--;
-					else
-						row++;
-					col = 0;
+				if (user_col == COL_MAX) {
+					user_row++;
+					if (user_row == ROW_MAX)
+						user_row = SEPARATOR+1;
+					user_col = 0;
 				}
-				fbputchar('_', row, col);//cursor to mark where we're typing
+				fbputchar('_', user_row, user_col);//cursor to mark where we're typing
 			}
 			//Deal with non-ASCII keystrokes
 			else{
 				//backspace
-				if (firstkey == 42){
-					sendbuf[spot--] = ' ';
-					fbputchar(' ', row, col--);
-					fbputchar('_', row, col);
+				if (firstkey == 42) {
+					user_buf[user_spot--] = ' ';
+					fbputchar(' ', user_row, user_col--);
+					fbputchar('_', user_row, user_col);
 				}
 				//TODO: How to tackle arrow keys? 
 				//We want the _ cursor over an ascii character while also showing the cursor, right?
 
 				//TODO: Enter
-				if (firstkey == 40){
-					sendbuf[spot]='\0';
-					write(sockfd, sendbuf, spot-1);
+				if (firstkey == 40) {
+					user_buf[user_spot]='\0';
+					write(sockfd, user_buf, user_spot-1);
+
 					//clear user's framebuffer space
-					fbputspace(46);
-					fbputspace(47);
+					int clear_index = SEPARATOR+1;
+					for (clear_index; clear_index<ROW_MAX; clear_index++)
+						fbputspace(clear_index);
 
 					//Print to "chat" section of screen
 					pthread_mutex_lock(&mutex); /* Grab the lock */
 					/*scroll the screen if it is already full*/
-					if (disp_row==SEPARATOR) {
+					if (chat_row==SEPARATOR) {
 						fbscroll(SEPARATOR);
-						disp_row--;
+						chat_row--;
 					}
-					fbputs(sendbuf, disp_row, 0);
-					disp_row++;
+					fbputs(user_buf, chat_row, 0);
+					chat_row++;
 					pthread_mutex_unlock(&mutex); /* Release the lock */
 
 					//Reset user's text space
-					spot = 0;
-					row = SEPARATOR+1;
-					col = 0;
+					user_spot = 0;
+					user_row = SEPARATOR+1;
+					user_col = 0;
 				}
-				modkey = 1;
+				is_ascii = 1;
 			}
 
 
@@ -280,20 +292,20 @@ int main()
 
 void *network_thread_f(void *ignored)
 {
-	char recvBuf[BUFFER_SIZE];
+	char recvBuf[CHAT_BUF_SIZE];
 	int n;
 	/* Receive data */
-	while ( (n = read(sockfd, &recvBuf, BUFFER_SIZE - 1)) > 0 ) {
+	while ( (n = read(sockfd, &recvBuf, CHAT_BUF_SIZE - 1)) > 0 ) {
 		pthread_mutex_lock(&mutex); /* Grab the lock */
 		/*scroll the screen if it is already full*/
-		if (disp_row==SEPARATOR) {
+		if (chat_row==SEPARATOR) {
 			fbscroll(SEPARATOR);
-			disp_row--;
+			chat_row--;
 		}
 		recvBuf[n] = '\0';
 		printf("%s", recvBuf);
-		fbputs(recvBuf, disp_row, 0);
-		disp_row++;
+		fbputs(recvBuf, chat_row, 0);
+		chat_row++;
 		pthread_mutex_unlock(&mutex); /* Release the lock */
 	}
 	return NULL;
