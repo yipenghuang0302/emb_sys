@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 #include <linux/fb.h>
 
@@ -123,6 +124,7 @@ void fbrowcopy(int source, int dest) {
 		}
 	}
 */	int pixel;
+//	printf("source=%d; dest=%d\n", source, dest);
 	for (pixel=0; pixel< 128 * FONT_WIDTH * BITS_PER_PIXEL / 8; pixel++){
 		memcpy(
 			framebuffer + (dest * FONT_HEIGHT + fb_vinfo.yoffset) * fb_finfo.line_length, // destination

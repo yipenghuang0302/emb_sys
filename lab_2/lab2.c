@@ -9,7 +9,7 @@
 #include <pthread.h>
 
 #define IPADDR(a,b,c,d) (htonl(((a)<<24)|((b)<<16)|((c)<<8)|(d)))
-#define SERVER_HOST IPADDR(192,168,1,1)
+#define SERVER_HOST IPADDR(192,168,1,117)
 #define SERVER_PORT htons(42000)
 
 #define CHAT_BUF_SIZE 128
@@ -232,7 +232,7 @@ int main()
 			//Deal with non-ASCII keystrokes
 			else{
 				//backspace
-				if (firstkey == 42) {
+				if (firstkey == 42 && user_spot > 0) {
 					user_buf[user_spot--] = ' ';
 					fbputchar(' ', user_row, user_col--);
 					fbputchar('_', user_row, user_col);
@@ -253,11 +253,12 @@ int main()
 					int print_spot = 0;
 					while (print_spot < user_spot) {
 						if (user_spot-print_spot > CHAT_BUF_SIZE-1) {
-							chat_print(user_buf+user_spot, CHAT_BUF_SIZE-1);
+							chat_print(user_buf+print_spot, CHAT_BUF_SIZE-1);
 							print_spot += CHAT_BUF_SIZE-1;
 						}
 						else {
-							chat_print(user_buf+user_spot, user_spot-print_spot);
+							chat_print(user_buf+print_spot, user_spot-print_spot);
+							print_spot += user_spot-print_spot;
 						}
 					}
 
@@ -268,13 +269,6 @@ int main()
 				}
 				is_ascii = 1;
 			}
-
-			/*
-				 sprintf(keystate, "%02x %02x %02x", packet.modifiers, packet.keycode[0],
-				 packet.keycode[1]);
-				 printf("%s\n", keystate);
-				 fbputs(keystate, 6, 0);
-			 */
 			if (packet.keycode[0] == 0x29) { /* ESC pressed? */
 				break;
 			}
@@ -293,6 +287,7 @@ int main()
 void *cursor_thread_f() {
 	/*Pseudocode*/
 	/*Share read access to user_buf and user_spot with keyboard thread*/
+	/*Share read access to user_col and user_row with keyboard thread*/
 	/*Every second, write alternating cursor and character to user_spot*/
 }
 
@@ -307,15 +302,20 @@ void *network_thread_f() {
 }
 
 void chat_print(char *chat_buf, int size) {
+	char temp;
 	pthread_mutex_lock(&mutex); /* Grab the lock */
+	temp = chat_buf[size];
 	/*scroll the screen if it is already full*/
 	if (chat_row==SEPARATOR) {
-		fbscroll(SEPARATOR);
-		chat_row--;
+//		fbscroll(SEPARATOR);
+		int clear_row;
+		for (clear_row = 0; clear_row < SEPARATOR; clear_row++)
+			fbputspace(clear_row);
+		chat_row=0;
 	}
 	chat_buf[size] = '\0';
-	printf("%s", chat_buf);
 	fbputs(chat_buf, chat_row, 0);
+	chat_buf[size]=temp;	
 	chat_row++;
 	pthread_mutex_unlock(&mutex); /* Release the lock */
 }
