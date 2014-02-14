@@ -39,8 +39,14 @@ pthread_t cursor_thread;
 void *cursor_thread_f();
 void chat_print();
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on fb and chat_row*/
+pthread_mutex_t chat_mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on fb and chat_row*/
 int chat_row = 0; /*row to print next chat*/
+
+pthread_mutex_t user_mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on user_buf and user_spot*/
+char user_buf[USER_BUF_SIZE];
+int user_col = 0; /*we'll start typing at left-hand edge of screen*/
+int user_row = SEPARATOR + 1; /*we'll also start right below the second line of asterisks*/
+int user_spot = 0;
 
 int main()
 {
@@ -58,25 +64,24 @@ int main()
 	}
 
 	/*initiate framebuffer*/
-	int user_col, user_row;
+	int setup_col, setup_row;
 	if ((err = fbopen()) != 0) {
 		fprintf(stderr, "Error: Could not open framebuffer: %d\n", err);
 		exit(1);
 	}
 
 	/* Clear the framebuffer */
-	for (user_row = 0; user_row < ROW_MAX; user_row++)
-		fbputspace(user_row);
+	for (setup_row = 0; setup_row < ROW_MAX; setup_row++)
+		fbputspace(setup_row);
 
 	/* Draw rows of asterisks across the top and bottom of the screen */
-	for (user_col = 0 ; user_col < COL_MAX ; user_col++) {
-		fbputchar('*', 0, user_col);
-		fbputchar('*', SEPARATOR, user_col);
+	for (setup_col = 0 ; setup_col < COL_MAX ; setup_col++) {
+		fbputchar('*', 0, setup_col);
+		fbputchar('*', SEPARATOR, setup_col);
 	}
 
 	/* Create a TCP communications socket */
 	struct sockaddr_in serv_addr = { AF_INET, SERVER_PORT, { SERVER_HOST } };
-	char user_buf[USER_BUF_SIZE];
 	if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
 		fprintf(stderr, "Error: Could not create socket\n");
 		exit(1);
@@ -91,17 +96,13 @@ int main()
 	/* Announce we have arrived */
 	write(sockfd, "Hello World!\n", 13);
 
+  	memset (user_buf, '\0', USER_BUF_SIZE);
+
 	/* Start the network thread */
 	pthread_create(&network_thread, NULL, network_thread_f, NULL);
 
 	/* Start the cursor thread */
 	pthread_create(&cursor_thread, NULL, cursor_thread_f, NULL);
-
-	user_col = 0; /*we'll start typing at left-hand edge of screen*/
-	user_row = SEPARATOR + 1; /*we'll also start right below the second line of asterisks*/
-
-	int user_spot = 0;
-  	memset (user_buf, '\0', USER_BUF_SIZE);
 
 	/* Look for and handle keypresses */
 	for (;;) {
@@ -215,6 +216,7 @@ int main()
 			}
 
 			if (is_ascii) {
+				pthread_mutex_lock(&user_mutex); /* Grab the lock */
 				/*print to user space and accumulate*/
 				if (firstkey) {
 					fbputchar(firstkey, user_row, user_col++);
@@ -227,27 +229,25 @@ int main()
 						user_row = SEPARATOR+1;
 					user_col = 0;
 				}
-				fbputchar('_', user_row, user_col);//cursor to mark where we're typing
+				pthread_mutex_unlock(&user_mutex); /* Release the lock */
 			}
 			//Deal with non-ASCII keystrokes
 			else{
 				//backspace
 				if (firstkey == 42 && user_spot > 0) {
+					pthread_mutex_lock(&user_mutex); /* Grab the lock */
 					user_buf[user_spot--] = ' ';
 					fbputchar(' ', user_row, user_col--);
-					fbputchar('_', user_row, user_col);
+					pthread_mutex_unlock(&user_mutex); /* Release the lock */
 				}
 				//TODO: How to tackle arrow keys? 
-				//We want the _ cursor over an ascii character while also showing the cursor, right?
 
 				if (firstkey == 40) {
+					pthread_mutex_lock(&user_mutex); /* Grab the lock */
 					user_buf[user_spot]='\0';
 					write(sockfd, user_buf, user_spot-1);
+					pthread_mutex_unlock(&user_mutex); /* Release the lock */
 
-					//clear user's framebuffer space
-					int clear_index;
-					for (clear_index = SEPARATOR+1; clear_index<ROW_MAX; clear_index++)
-						fbputspace(clear_index);
 
 					//Print to "chat" section of screen
 					int print_spot = 0;
@@ -263,9 +263,15 @@ int main()
 					}
 
 					//Reset user's text space
+					pthread_mutex_lock(&user_mutex); /* Grab the lock */
 					user_spot = 0;
 					user_row = SEPARATOR+1;
 					user_col = 0;
+					pthread_mutex_unlock(&user_mutex); /* Release the lock */
+					//clear user's framebuffer space
+					int clear_index;
+					for (clear_index = SEPARATOR+1; clear_index<ROW_MAX; clear_index++)
+						fbputspace(clear_index);
 				}
 				is_ascii = 1;
 			}
@@ -285,7 +291,14 @@ int main()
 }
 
 void *cursor_thread_f() {
-	/*Pseudocode*/
+	char char_under;
+	for (;;) {
+		char_under = user_buf[user_spot];
+	}
+				//We want the _ cursor over an ascii character while also showing the cursor, right?
+	
+	fbputchar('_', user_row, user_col);//cursor to mark where we're typing
+	fbputchar('_', user_row, user_col);
 	/*Share read access to user_buf and user_spot with keyboard thread*/
 	/*Share read access to user_col and user_row with keyboard thread*/
 	/*Every second, write alternating cursor and character to user_spot*/
@@ -303,7 +316,7 @@ void *network_thread_f() {
 
 void chat_print(char *chat_buf, int size) {
 	char temp;
-	pthread_mutex_lock(&mutex); /* Grab the lock */
+	pthread_mutex_lock(&chat_mutex); /* Grab the lock */
 	temp = chat_buf[size];
 	/*scroll the screen if it is already full*/
 	if (chat_row==SEPARATOR) {
@@ -317,5 +330,5 @@ void chat_print(char *chat_buf, int size) {
 	fbputs(chat_buf, chat_row, 0);
 	chat_buf[size]=temp;	
 	chat_row++;
-	pthread_mutex_unlock(&mutex); /* Release the lock */
+	pthread_mutex_unlock(&chat_mutex); /* Release the lock */
 }
