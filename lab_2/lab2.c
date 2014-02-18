@@ -42,11 +42,13 @@ void chat_print();
 pthread_mutex_t chat_mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on fb and chat_row*/
 int chat_row = 0; /*row to print next chat*/
 
+/*Share read access to user_buf and user_spot with keyboard thread*/
+/*Share read access to user_col and user_row with keyboard thread*/
 pthread_mutex_t user_mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on user_buf and user_spot*/
 char user_buf[USER_BUF_SIZE];
+int user_spot = 0;
 int user_col = 0; /*we'll start typing at left-hand edge of screen*/
 int user_row = SEPARATOR + 1; /*we'll also start right below the second line of asterisks*/
-int user_spot = 0;
 
 int main()
 {
@@ -290,18 +292,18 @@ int main()
 	return 0;
 }
 
+/*Every second, write alternating cursor and character to user_spot*/
 void *cursor_thread_f() {
-	char char_under;
 	for (;;) {
-		char_under = user_buf[user_spot];
+		pthread_mutex_lock(&chat_mutex); /* Grab the lock */
+		fbputchar('_', user_row, user_col); //cursor to mark where we're typing
+		pthread_mutex_unlock(&chat_mutex); /* Release the lock */
+		usleep(500000);
+		pthread_mutex_lock(&chat_mutex); /* Grab the lock */
+		fbputchar(user_buf[user_spot], user_row, user_col); //cursor to mark where we're typing
+		pthread_mutex_unlock(&chat_mutex); /* Release the lock */
+		usleep(500000);
 	}
-				//We want the _ cursor over an ascii character while also showing the cursor, right?
-	
-	fbputchar('_', user_row, user_col);//cursor to mark where we're typing
-	fbputchar('_', user_row, user_col);
-	/*Share read access to user_buf and user_spot with keyboard thread*/
-	/*Share read access to user_col and user_row with keyboard thread*/
-	/*Every second, write alternating cursor and character to user_spot*/
 }
 
 void *network_thread_f() {
