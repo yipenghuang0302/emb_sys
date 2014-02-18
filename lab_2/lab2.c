@@ -243,7 +243,20 @@ int main()
 					pthread_mutex_unlock(&user_mutex); /* Release the lock */
 				}
 				//TODO: How to tackle arrow keys? 
+				//left arrow
+				if (firstkey == 80 && user_spot > 0) {
+					pthread_mutex_lock(&user_mutex); /* Grab the lock */
+					user_spot--;
+					pthread_mutex_unlock(&user_mutex); /* Release the lock */
+				}
+				//right arrow
+				if (firstkey == 81 && user_spot < USER_BUF_SIZE) {
+					pthread_mutex_lock(&user_mutex); /* Grab the lock */
+					user_spot++;
+					pthread_mutex_unlock(&user_mutex); /* Release the lock */
+				}
 
+				//return
 				if (firstkey == 40) {
 					pthread_mutex_lock(&user_mutex); /* Grab the lock */
 					user_buf[user_spot]='\0';
