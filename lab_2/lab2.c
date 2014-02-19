@@ -9,7 +9,7 @@
 #include <pthread.h>
 
 #define IPADDR(a,b,c,d) (htonl(((a)<<24)|((b)<<16)|((c)<<8)|(d)))
-#define SERVER_HOST IPADDR(192,168,1,117)
+#define SERVER_HOST IPADDR(192,168,1,1)
 #define SERVER_PORT htons(42000)
 
 #define CHAT_BUF_SIZE 128
@@ -98,7 +98,8 @@ int main()
 	/* Announce we have arrived */
 	write(sockfd, "Hello World!\n", 13);
 
-  	memset (user_buf, '\0', USER_BUF_SIZE);
+	/* Set up user_buf */
+	memset (user_buf, ' ', USER_BUF_SIZE);
 
 	/* Start the network thread */
 	pthread_create(&network_thread, NULL, network_thread_f, NULL);
@@ -286,6 +287,7 @@ int main()
 					user_spot = 0;
 					user_row = SEPARATOR+1;
 					user_col = 0;
+					memset (user_buf, ' ', USER_BUF_SIZE);
 					pthread_mutex_unlock(&user_mutex); /* Release the lock */
 					//clear user's framebuffer space
 					int clear_index;
@@ -317,7 +319,10 @@ void *cursor_thread_f() {
 		pthread_mutex_unlock(&chat_mutex); /* Release the lock */
 		usleep(500000);
 		pthread_mutex_lock(&chat_mutex); /* Grab the lock */
-		fbputchar(user_buf[user_spot], user_row, user_col); //cursor to mark where we're typing
+		if (user_spot > 255)
+			fbputchar(user_buf[user_spot - 256], user_row, user_col);
+		else
+			fbputchar(user_buf[user_spot], user_row, user_col); //cursor to mark where we're typing
 		pthread_mutex_unlock(&chat_mutex); /* Release the lock */
 		usleep(500000);
 	}
