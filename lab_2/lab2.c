@@ -47,6 +47,7 @@ int chat_row = 0; /*row to print next chat*/
 pthread_mutex_t user_mutex = PTHREAD_MUTEX_INITIALIZER; /*lock on user_buf and user_spot*/
 char user_buf[USER_BUF_SIZE];
 int user_spot = 0;
+int message_spot = 0; /*where the current user message ends in our buffer */
 int user_col = 0; /*we'll start typing at left-hand edge of screen*/
 int user_row = SEPARATOR + 1; /*we'll also start right below the second line of asterisks*/
 
@@ -224,6 +225,7 @@ int main()
 				if (firstkey) {
 					fbputchar(firstkey, user_row, user_col++);
 					user_buf[user_spot++] = firstkey;
+					message_spot++;
 				}
 				//wraparound
 				if (user_col == COL_MAX) {
@@ -239,12 +241,39 @@ int main()
 				//backspace
 				if (firstkey == 42 && user_spot > 0) {
 					pthread_mutex_lock(&user_mutex); /* Grab the lock */
-					memcpy(
+					int i;
+					for (i = 0; i < USER_BUF_SIZE-user_spot; i++){
+						user_buf[user_spot+i-1] = user_buf[user_spot+i];
+					}
+					/*
+					memmove(
 						user_buf+user_spot-1, // destination
 						user_buf+user_spot, // source
 						sizeof(USER_BUF_SIZE-user_spot)
 					);
-					user_buf[user_spot--] = ' ';
+					*/
+					printf("%s\n", user_buf);
+					if (message_spot == user_spot)
+						if (user_spot > 255)
+							fbputchar(user_buf[user_spot-256], user_row, user_col);
+						else
+							fbputchar(' ', user_row, user_col);
+					else{
+						for (i=0; i<message_spot-user_spot; i++){
+							fbputchar(user_buf[user_spot+i], user_row, user_col+i);
+						}
+						fbputchar(' ', user_row, user_col+i);
+					}
+					user_spot--;
+					message_spot--;
+					if (!user_col){
+						user_col = COL_MAX;
+						if (user_row  == ROW_MAX - 1)
+							user_row = SEPARATOR+1;
+						else
+							user_row = SEPARATOR+2;
+					}
+					user_col--;
 					/*TODO: reprint the user half of screen*/
 /*					fbputchar(' ', user_row, user_col--);*/
 					pthread_mutex_unlock(&user_mutex); /* Release the lock */
@@ -252,39 +281,65 @@ int main()
 				//left arrow
 				if (firstkey == 80 && user_spot > 0) {
 					pthread_mutex_lock(&user_mutex); /* Grab the lock */
+					if (user_spot == message_spot && user_spot > 255)
+						fbputchar(user_buf[user_spot - 256], user_row, user_col);//make sure we don't leave a cursor character 
+					else
+						fbputchar(user_buf[user_spot], user_row, user_col);//make sure we don't leave a cursor character 
 					user_spot--;
+
+					/*Wraparound*/
+					if (!user_col){
+						user_col = COL_MAX;
+						if (user_row  == ROW_MAX - 1)
+							user_row = SEPARATOR+1;
+						else
+							user_row = SEPARATOR+2;
+					}
+
+					user_col--;
 					pthread_mutex_unlock(&user_mutex); /* Release the lock */
 				}
 				//right arrow
-				if (firstkey == 81 && user_spot < USER_BUF_SIZE) {
+				if (firstkey == 79 && user_spot < message_spot) {
 					pthread_mutex_lock(&user_mutex); /* Grab the lock */
+					fbputchar(user_buf[user_spot], user_row, user_col);//make sure we don't leave a cursor character 
 					user_spot++;
+					user_col++;
+					/*Wraparound*/
+					if (user_col == COL_MAX){
+						user_col = 0;
+						if (user_row  == ROW_MAX - 1)
+							user_row = SEPARATOR+1;
+						else
+							user_row = SEPARATOR+2;
+					}
 					pthread_mutex_unlock(&user_mutex); /* Release the lock */
 				}
 
 				//return
 				if (firstkey == 40) {
 					pthread_mutex_lock(&user_mutex); /* Grab the lock */
-					user_buf[user_spot]='\0';
-					write(sockfd, user_buf, user_spot-1);
+					user_buf[message_spot]='\0';
+					write(sockfd, user_buf, message_spot-1);
 					pthread_mutex_unlock(&user_mutex); /* Release the lock */
 
 					//Print to "chat" section of screen
 					int print_spot = 0;
-					while (print_spot < user_spot) {
-						if (user_spot-print_spot > CHAT_BUF_SIZE-1) {
+					while (print_spot < message_spot) {
+						if (message_spot-print_spot > CHAT_BUF_SIZE-1) {
 							chat_print(user_buf+print_spot, CHAT_BUF_SIZE-1);
 							print_spot += CHAT_BUF_SIZE-1;
 						}
 						else {
-							chat_print(user_buf+print_spot, user_spot-print_spot);
-							print_spot += user_spot-print_spot;
+							chat_print(user_buf+print_spot, message_spot-print_spot);
+							print_spot += message_spot-print_spot;
 						}
 					}
 
 					//Reset user's text space
 					pthread_mutex_lock(&user_mutex); /* Grab the lock */
 					user_spot = 0;
+					message_spot = 0;
 					user_row = SEPARATOR+1;
 					user_col = 0;
 					memset (user_buf, ' ', USER_BUF_SIZE);
@@ -314,16 +369,16 @@ int main()
 /*Every second, write alternating cursor and character to user_spot*/
 void *cursor_thread_f() {
 	for (;;) {
-		pthread_mutex_lock(&chat_mutex); /* Grab the lock */
+		pthread_mutex_lock(&user_mutex); /* Grab the lock */
 		fbputchar('_', user_row, user_col); //cursor to mark where we're typing
-		pthread_mutex_unlock(&chat_mutex); /* Release the lock */
+		pthread_mutex_unlock(&user_mutex); /* Release the lock */
 		usleep(500000);
-		pthread_mutex_lock(&chat_mutex); /* Grab the lock */
-		if (user_spot > 255)
+		pthread_mutex_lock(&user_mutex); /* Grab the lock */
+		if (user_spot == message_spot && user_spot > 255)
 			fbputchar(user_buf[user_spot - 256], user_row, user_col);
 		else
 			fbputchar(user_buf[user_spot], user_row, user_col); //cursor to mark where we're typing
-		pthread_mutex_unlock(&chat_mutex); /* Release the lock */
+		pthread_mutex_unlock(&user_mutex); /* Release the lock */
 		usleep(500000);
 	}
 }
