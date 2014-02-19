@@ -238,11 +238,16 @@ int main()
 				//backspace
 				if (firstkey == 42 && user_spot > 0) {
 					pthread_mutex_lock(&user_mutex); /* Grab the lock */
+					memcpy(
+						user_buf+user_spot-1, // destination
+						user_buf+user_spot, // source
+						sizeof(USER_BUF_SIZE-user_spot)
+					);
 					user_buf[user_spot--] = ' ';
-					fbputchar(' ', user_row, user_col--);
+					/*TODO: reprint the user half of screen*/
+/*					fbputchar(' ', user_row, user_col--);*/
 					pthread_mutex_unlock(&user_mutex); /* Release the lock */
 				}
-				//TODO: How to tackle arrow keys? 
 				//left arrow
 				if (firstkey == 80 && user_spot > 0) {
 					pthread_mutex_lock(&user_mutex); /* Grab the lock */
@@ -262,7 +267,6 @@ int main()
 					user_buf[user_spot]='\0';
 					write(sockfd, user_buf, user_spot-1);
 					pthread_mutex_unlock(&user_mutex); /* Release the lock */
-
 
 					//Print to "chat" section of screen
 					int print_spot = 0;
