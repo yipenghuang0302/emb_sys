@@ -72,85 +72,89 @@ module VGA_BALL(
    assign VGA_BLANK_n = !( hcount[10] & (hcount[9] | hcount[8]) ) &
 			!( vcount[9] | (vcount[8:5] == 4'b1111) );   
 
-	logic [9:0] vpixel;
-	adder_v	vpixel_sub (
+	logic [11:0] vpixel;
+	adder_12 vpixel_sub (
+		.add_sub ( 1'b0 ), //sub
 		.clock ( clk50 ),
-		.dataa ( vcount ),
-		.datab ( VFRONT_PORCH + VSYNC + VBACK_PORCH ),
+		.dataa ( {1'b0,1'b0,vcount} ),
+		.datab ( {1'b0,VFRONT_PORCH + VSYNC + VBACK_PORCH} ),
 		.result ( vpixel )
 	);
 
-	logic [9:0] vdelta;
-	adder_v	vdelta_sub (
+	logic [11:0] vdelta;
+	adder_12 vdelta_sub (
+		.add_sub ( 1'b0 ), //sub
 		.clock ( clk50 ),
 		.dataa ( vpixel ),
-		.datab ( {1'b0,vpos} ),
+		.datab ( {1'b0,1'b0,1'b0,vpos} ),
 		.result ( vdelta )
 	);
 
-	logic [19:0] vsquare;
-	mult_v	v_mult (
+	logic [23:0] vsquare;
+	mult_12	vsquare_mult (
 		.clock ( clk50 ),
 		.dataa ( vdelta ),
 		.result ( vsquare )
 	);
 
-	logic [10:0] hpixel;
-	adder_h	hpixel_sub (
+	logic [11:0] hpixel;
+	adder_12 hpixel_sub (
+		.add_sub ( 1'b0 ), //sub
 		.clock ( clk50 ),
-		.dataa ( hcount ),
-		.datab ( HFRONT_PORCH + HSYNC + HBACK_PORCH ),
+		.dataa ( {1'b0,hcount} ),
+		.datab ( {1'b0,HFRONT_PORCH + HSYNC + HBACK_PORCH} ),
 		.result ( hpixel )
 	);
 
-	logic [10:0] hdelta;
-	adder_h	hdelta_sub (
+	logic [11:0] hdelta;
+	adder_12 hdelta_sub (
+		.add_sub ( 1'b0 ), //sub
 		.clock ( clk50 ),
 		.dataa ( {1'b0,hpixel[10:1]} ), // divide hpixel by 2
-		.datab ( {1'b0,hpos} ),
+		.datab ( {1'b0,1'b0,hpos} ),
 		.result ( hdelta )
 	);
 
-	logic [21:0] hsquare;
-	mult_h	h_mult (
+	logic [23:0] hsquare;
+	mult_12	hsquare_mult (
 		.clock ( clk50 ),
 		.dataa ( hdelta ),
 		.result ( hsquare )
 	);
 
-	logic [21:0] square_sum;
-	s_adder	s_adder_inst (
+	logic [23:0] square_sum;
+	adder_24 square_sum_add (
 		.add_sub ( 1'b1 ), // add
 		.clock ( clk50 ),
-		.dataa ( {1'b0,1'b0,vsquare} ),
+		.dataa ( vsquare ),
 		.datab ( hsquare ),
 		.result ( square_sum )
 	);
 
-	logic [21:0] rsquare;
-	mult_h	r_mult (
+	logic [23:0] rsquare;
+	mult_12	rsquare_mult (
 		.clock ( clk50 ),
-		.dataa ( radius ),
+		.dataa ( {1'b0,1'b0,radius} ),
 		.result ( rsquare )
 	);
 
-	logic [21:0] diff;
-	s_adder	diff_addr (
-		.add_sub ( 1'b0 ), // subtract
+	logic [23:0] diff;
+	adder_24 diff_sub (
+		.add_sub ( 1'b0 ), // sub
 		.clock ( clk50 ),
-		.dataa ( rsquare ),
-		.datab ( square_sum ),
+		.dataa ( square_sum ),
+		.datab ( rsquare ),
 		.result ( diff )
 	);
 
-	// TODO: if diff > 0 then print
+	assign VGA_CLK = hcount[0]; // 25 MHz clock: pixel latched on rising edge
 
-   assign VGA_CLK = hcount[0]; // 25 MHz clock: pixel latched on rising edge
-   
-   always_comb begin
-      {VGA_R, VGA_G, VGA_B} = {8'h0, 8'h0, 8'h0}; // Black
-	  {VGA_R, VGA_G, VGA_B} = {8'hff, 8'h00, 8'h00}; // Red
-	  {VGA_R, VGA_G, VGA_B} = {8'h20, 8'h20, 8'h20}; // Dark Gray
-   end  
-   
+	// diff[23] == 1 iff rsquare > square_sum
+	always_comb begin
+		{VGA_R, VGA_G, VGA_B} = {8'h0, 8'h0, 8'h0}; // Black
+		if (diff[23]==1'b1) begin
+			{VGA_R, VGA_G, VGA_B} = {8'hff, 8'h00, 8'h00}; // Red
+		end
+	end  
+
 endmodule // VGA_LED_Emulator
