@@ -22,3 +22,4 @@ ls /sys/module/vga_led
 ls /sys/devices/soc.0
 ls /sys/class/misc/vga_led
 ls /sys/bus/drivers
+rmmod vga_led
