@@ -22,14 +22,14 @@
 
 /*
  * Macros for device 'vga_led_0', class 'vga_led'
- * The macros are prefixed with 'VGA_LED_0_'.
+ * The macros are prefixed with 'VGA_BALL_0_'.
  * The prefix is the slave descriptor.
  */
-#define VGA_LED_0_COMPONENT_TYPE vga_led
-#define VGA_LED_0_COMPONENT_NAME vga_led_0
-#define VGA_LED_0_BASE 0x0
-#define VGA_LED_0_SPAN 8
-#define VGA_LED_0_END 0x7
+#define VGA_BALL_0_COMPONENT_TYPE vga_ball
+#define VGA_BALL_0_COMPONENT_NAME vga_ball_0
+#define VGA_BALL_0_BASE 0x0
+#define VGA_BALL_0_SPAN 8
+#define VGA_BALL_0_END 0x7
 
 
 #endif /* _ALTERA_HPS_0_H_ */
