@@ -13,7 +13,7 @@
 #   and then "source syscon-test.tcl"
 
 # Base addresses of the peripherals: take from Qsys
-set vga_led 0x0
+set vga_ball 0x0
 
 puts "Started system-console-test-script"
 
@@ -44,8 +44,8 @@ open_service master $m
 puts "Opened master"
 
 # Write a test pattern to the various registers
-foreach {r v} {0 0xff 1 0x1 2 0x2 3 0x4 4 0x8 5 0x10 6 0x20 7 0x40} {
-    master_write_8 $m [expr $vga_led + $r] $v
+foreach {r v} {0 0x00ff 1 0x00ff} {
+    master_write_8 $m [expr $vga_ball + $r] $v
 }
 
 close_service master $m

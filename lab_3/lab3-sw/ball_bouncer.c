@@ -26,7 +26,7 @@ void print_coordinate_info() {
 		perror("ioctl(VGA_BALl_READ_COORD) failed");
 		return;
 	}
-	printf("(%d, %d)", vla.x, vla,y);
+	printf("(%d, %d)", vla.x, vla.y);
   printf("\n");
 }
 
