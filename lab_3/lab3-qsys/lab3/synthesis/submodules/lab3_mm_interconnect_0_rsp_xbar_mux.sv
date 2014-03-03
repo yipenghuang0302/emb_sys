@@ -30,8 +30,8 @@
 //   ARBITRATION_SHARES:  1
 //   ARBITRATION_SCHEME   "no-arb"
 //   PIPELINE_ARB:        0
-//   PKT_TRANS_LOCK:      72 (arbitration locking enabled)
-//   ST_DATA_W:           123
+//   PKT_TRANS_LOCK:      54 (arbitration locking enabled)
+//   ST_DATA_W:           107
 //   ST_CHANNEL_W:        3
 // ------------------------------------------
 
@@ -41,7 +41,7 @@ module lab3_mm_interconnect_0_rsp_xbar_mux
     // Sinks
     // ----------------------
     input                       sink0_valid,
-    input [123-1   : 0]  sink0_data,
+    input [107-1   : 0]  sink0_data,
     input [3-1: 0]  sink0_channel,
     input                       sink0_startofpacket,
     input                       sink0_endofpacket,
@@ -52,7 +52,7 @@ module lab3_mm_interconnect_0_rsp_xbar_mux
     // Source
     // ----------------------
     output                      src_valid,
-    output [123-1    : 0] src_data,
+    output [107-1    : 0] src_data,
     output [3-1 : 0] src_channel,
     output                      src_startofpacket,
     output                      src_endofpacket,
@@ -64,13 +64,13 @@ module lab3_mm_interconnect_0_rsp_xbar_mux
     input clk,
     input reset
 );
-    localparam PAYLOAD_W        = 123 + 3 + 2;
+    localparam PAYLOAD_W        = 107 + 3 + 2;
     localparam NUM_INPUTS       = 1;
     localparam SHARE_COUNTER_W  = 1;
     localparam PIPELINE_ARB     = 0;
-    localparam ST_DATA_W        = 123;
+    localparam ST_DATA_W        = 107;
     localparam ST_CHANNEL_W     = 3;
-    localparam PKT_TRANS_LOCK   = 72;
+    localparam PKT_TRANS_LOCK   = 54;
 
 	assign	src_valid			=  sink0_valid;
 	assign	src_data			=  sink0_data;

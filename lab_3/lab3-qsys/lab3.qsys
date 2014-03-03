@@ -12,7 +12,7 @@
    element $${FILENAME}
    {
    }
-   element vga_led_0.avalon_slave_0
+   element vga_ball_0.avalon_slave_0
    {
       datum baseAddress
       {
@@ -44,7 +44,7 @@
          type = "int";
       }
    }
-   element vga_led_0
+   element vga_ball_0
    {
       datum _sortIndex
       {
@@ -74,7 +74,7 @@
  <interface name="reset" internal="clk_0.clk_in_reset" type="reset" dir="end" />
  <interface name="memory" internal="hps_0.memory" type="conduit" dir="end" />
  <interface name="hps_io" internal="hps_0.hps_io" type="conduit" dir="end" />
- <interface name="vga" internal="vga_led_0.conduit_end" type="conduit" dir="end" />
+ <interface name="vga" internal="vga_ball_0.conduit_end" type="conduit" dir="end" />
  <module kind="clock_source" version="13.1" enabled="1" name="clk_0">
   <parameter name="clockFrequency" value="50000000" />
   <parameter name="clockFrequencyKnown" value="true" />
@@ -554,9 +554,7 @@
   <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
   <parameter name="AUTO_DEVICE" value="5CSXFC6D6F31C8ES" />
  </module>
- <module kind="vga_led" version="1.0" enabled="1" name="vga_led_0">
-  <parameter name="AUTO_CLOCK_CLOCK_RATE" value="50000000" />
- </module>
+ <module kind="vga_ball" version="1.0" enabled="1" name="vga_ball_0" />
  <connection
    kind="clock"
    version="13.1"
@@ -578,17 +576,17 @@
    version="13.1"
    start="clk_0.clk_reset"
    end="master_0.clk_reset" />
- <connection kind="clock" version="13.1" start="clk_0.clk" end="vga_led_0.clock" />
+ <connection kind="clock" version="13.1" start="clk_0.clk" end="vga_ball_0.clock" />
  <connection
    kind="reset"
    version="13.1"
    start="clk_0.clk_reset"
-   end="vga_led_0.reset_sink" />
+   end="vga_ball_0.reset_sink" />
  <connection
    kind="avalon"
    version="13.1"
-   start="master_0.master"
-   end="vga_led_0.avalon_slave_0">
+   start="hps_0.h2f_axi_master"
+   end="vga_ball_0.avalon_slave_0">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x0000" />
   <parameter name="defaultConnection" value="false" />
@@ -596,8 +594,8 @@
  <connection
    kind="avalon"
    version="13.1"
-   start="hps_0.h2f_lw_axi_master"
-   end="vga_led_0.avalon_slave_0">
+   start="master_0.master"
+   end="vga_ball_0.avalon_slave_0">
   <parameter name="arbitrationPriority" value="1" />
   <parameter name="baseAddress" value="0x0000" />
   <parameter name="defaultConnection" value="false" />

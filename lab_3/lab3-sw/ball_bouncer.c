@@ -22,8 +22,8 @@ int vga_ball_fd;
 void print_coordinate_info() {
   vga_ball_arg_t vla;
 
-	if (ioctl(vga_led_fd, VGA_LED_READ_COORD, &vla)) {
-		perror("ioctl(VGA_LED_READ_COORD) failed");
+	if (ioctl(vga_ball_fd, VGA_BALL_READ_COORD, &vla)) {
+		perror("ioctl(VGA_BALl_READ_COORD) failed");
 		return;
 	}
 	printf("(%d, %d)", vla.x, vla,y);
@@ -33,11 +33,11 @@ void print_coordinate_info() {
 /* Write the coordinates to the display */
 void write_coordinates(unsigned short xcoord, unsigned short ycoord)
 {
-  vga_led_arg_t vla;
+  vga_ball_arg_t vla;
 	vla.x = xcoord;
 	vla.y = ycoord;
-	if (ioctl(vga_led_fd, VGA_LED_WRITE_COORD, &vla)) {
-		perror("ioctl(VGA_LED_WRITE_COORD) failed");
+	if (ioctl(vga_ball_fd, VGA_BALL_WRITE_COORD, &vla)) {
+		perror("ioctl(VGA_BALL_WRITE_COORD) failed");
 		return;
 	}
 }
