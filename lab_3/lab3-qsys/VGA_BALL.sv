@@ -27,6 +27,6 @@ module VGA_BALL (
 			1'b1 : hpos <= writedata[9:0];
 		endcase
 
-	assign radius = 10'd10;
+	assign radius = 20'd10;
 
 endmodule
