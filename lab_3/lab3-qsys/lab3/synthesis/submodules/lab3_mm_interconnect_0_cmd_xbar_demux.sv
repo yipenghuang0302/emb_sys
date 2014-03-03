@@ -1,4 +1,4 @@
-// (C) 2001-2013 Altera Corporation. All rights reserved.
+// (C) 2001-2014 Altera Corporation. All rights reserved.
 // Your use of Altera Corporation's design tools, logic functions and other 
 // software and tools, and its AMPP partner logic functions, and any output 
 // files any of the foregoing (including device programming or simulation 
@@ -28,7 +28,7 @@
 // ------------------------------------------
 // Generation parameters:
 //   output_name:         lab3_mm_interconnect_0_cmd_xbar_demux
-//   ST_DATA_W:           107
+//   ST_DATA_W:           123
 //   ST_CHANNEL_W:        3
 //   NUM_OUTPUTS:         1
 //   VALID_WIDTH:         1
@@ -46,7 +46,7 @@ module lab3_mm_interconnect_0_cmd_xbar_demux
     // Sink
     // -------------------
     input  [1-1      : 0]   sink_valid,
-    input  [107-1    : 0]   sink_data, // ST_DATA_W=107
+    input  [123-1    : 0]   sink_data, // ST_DATA_W=123
     input  [3-1 : 0]   sink_channel, // ST_CHANNEL_W=3
     input                         sink_startofpacket,
     input                         sink_endofpacket,
@@ -56,7 +56,7 @@ module lab3_mm_interconnect_0_cmd_xbar_demux
     // Sources 
     // -------------------
     output reg                      src0_valid,
-    output reg [107-1    : 0] src0_data, // ST_DATA_W=107
+    output reg [123-1    : 0] src0_data, // ST_DATA_W=123
     output reg [3-1 : 0] src0_channel, // ST_CHANNEL_W=3
     output reg                      src0_startofpacket,
     output reg                      src0_endofpacket,

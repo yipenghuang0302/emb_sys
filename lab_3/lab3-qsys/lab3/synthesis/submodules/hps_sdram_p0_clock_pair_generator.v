@@ -1,11 +1,11 @@
 //altiobuf_out CBX_AUTO_BLACKBOX="ALL" CBX_SINGLE_OUTPUT_FILE="ON" DEVICE_FAMILY="Cyclone V" ENABLE_BUS_HOLD="FALSE" NUMBER_OF_CHANNELS=1 OPEN_DRAIN_OUTPUT="FALSE" PSEUDO_DIFFERENTIAL_MODE="TRUE" USE_DIFFERENTIAL_MODE="TRUE" USE_OE="FALSE" USE_OUT_DYNAMIC_DELAY_CHAIN1="FALSE" USE_OUT_DYNAMIC_DELAY_CHAIN2="FALSE" USE_TERMINATION_CONTROL="FALSE" datain dataout dataout_b
-//VERSION_BEGIN 13.1 cbx_altiobuf_out 2013:11:26:18:14:54:SJ cbx_mgl 2013:11:26:18:15:59:SJ cbx_stratixiii 2013:11:26:18:14:54:SJ cbx_stratixv 2013:11:26:18:14:54:SJ  VERSION_END
+//VERSION_BEGIN 13.1 cbx_altiobuf_out 2014:02:12:20:59:45:SJ cbx_mgl 2014:02:12:21:04:28:SJ cbx_stratixiii 2014:02:12:20:59:46:SJ cbx_stratixv 2014:02:12:20:59:46:SJ  VERSION_END
 // synthesis VERILOG_INPUT_VERSION VERILOG_2001
 // altera message_off 10463
 
 
 
-// Copyright (C) 1991-2013 Altera Corporation
+// Copyright (C) 1991-2014 Altera Corporation
 //  Your use of Altera Corporation's design tools, logic functions 
 //  and other software and tools, and its AMPP partner logic 
 //  functions, and any output files from any of the foregoing 

@@ -378,6 +378,10 @@ param_t *param = 0;
 
 alt_u32 curr_shadow_reg = 0;
 
+#if ENABLE_DELAY_CHAIN_WRITE
+alt_u32 vfifo_settings[RW_MGR_MEM_IF_READ_DQS_WIDTH];
+#endif // ENABLE_DELAY_CHAIN_WRITE
+
 #if ENABLE_NON_DESTRUCTIVE_CALIB
 // Technically, the use of these variables could be separated from ENABLE_NON_DESTRUCTIVE_CALIB
 // but currently they are part of a single feature which is not fully validated, so we're keeping
@@ -715,23 +719,6 @@ void initialize(void)
 		param->read_correct_mask     = ((t_btfld)1 << RW_MGR_MEM_DQ_PER_READ_DQS) - 1;
 		param->write_correct_mask    = ((t_btfld)1 << RW_MGR_MEM_DQ_PER_WRITE_DQS) - 1;
 		param->dm_correct_mask       = ((t_btfld)1 << (RW_MGR_MEM_DATA_WIDTH / RW_MGR_MEM_DATA_MASK_WIDTH)) - 1;
-	}
-
-	//USER Only initialize rank and group mask when not in debug mode so that
-	//USER we can set it externally
-	if ((gbl->phy_debug_mode_flags & PHY_DEBUG_IN_DEBUG_MODE) == 0) {
-
-		//USER fill array used to determine if we skip certain ranks 
-
-		for (i = 0; i < RW_MGR_MEM_NUMBER_OF_RANKS; i++) {
-			param->skip_ranks[i] = 0;
-		}
-		
-		for (i = 0; i < NUM_SHADOW_REGS; ++i) {
-			param->skip_shadow_regs[i] = 0;
-		}
-		
-		param->skip_groups = 0;
 	}
 }
 
@@ -1177,7 +1164,7 @@ void scc_mgr_initialize(void)
 }
 #endif
 
-static inline void scc_mgr_set_dqs_bus_in_delay(alt_u32 read_group, alt_u32 delay)
+inline void scc_mgr_set_dqs_bus_in_delay(alt_u32 read_group, alt_u32 delay)
 {
 	ALTERA_ASSERT(read_group < RW_MGR_MEM_IF_READ_DQS_WIDTH);
 
@@ -1365,7 +1352,7 @@ static inline void scc_mgr_set_dqs_bypass(alt_u32 write_group, alt_u32 bypass)
 	WRITE_SCC_DQS_BYPASS(write_group, bypass);
 }
 
-static inline void scc_mgr_set_dq_out1_delay(alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay)
+inline void scc_mgr_set_dq_out1_delay(alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay)
 {
 #if ENABLE_TCL_DEBUG || ENABLE_ASSERT
 	alt_u32 dq = write_group*RW_MGR_MEM_DQ_PER_WRITE_DQS + dq_in_group;
@@ -1382,7 +1369,7 @@ static inline void scc_mgr_set_dq_out1_delay(alt_u32 write_group, alt_u32 dq_in_
 
 }
 
-static inline void scc_mgr_set_dq_out2_delay(alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay)
+inline void scc_mgr_set_dq_out2_delay(alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay)
 {
 #if ENABLE_TCL_DEBUG || ENABLE_ASSERT
 	alt_u32 dq = write_group*RW_MGR_MEM_DQ_PER_WRITE_DQS + dq_in_group;
@@ -1399,7 +1386,7 @@ static inline void scc_mgr_set_dq_out2_delay(alt_u32 write_group, alt_u32 dq_in_
 
 }
 
-static inline void scc_mgr_set_dq_in_delay(alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay)
+inline void scc_mgr_set_dq_in_delay(alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay)
 {
 #if ENABLE_TCL_DEBUG || ENABLE_ASSERT
 	alt_u32 dq = write_group*RW_MGR_MEM_DQ_PER_WRITE_DQS + dq_in_group;
@@ -1471,7 +1458,7 @@ static inline void scc_mgr_set_dqs_out2_delay(alt_u32 write_group, alt_u32 delay
 
 }
 
-static inline void scc_mgr_set_dm_out1_delay(alt_u32 write_group, alt_u32 dm, alt_u32 delay)
+inline void scc_mgr_set_dm_out1_delay(alt_u32 write_group, alt_u32 dm, alt_u32 delay)
 {
 	ALTERA_ASSERT(write_group < RW_MGR_MEM_IF_WRITE_DQS_WIDTH);
 	ALTERA_ASSERT(dm < RW_MGR_NUM_DM_PER_WRITE_GROUP);
@@ -1487,7 +1474,7 @@ static inline void scc_mgr_set_dm_out1_delay(alt_u32 write_group, alt_u32 dm, al
 	}
 }
 
-static inline void scc_mgr_set_dm_out2_delay(alt_u32 write_group, alt_u32 dm, alt_u32 delay)
+inline void scc_mgr_set_dm_out2_delay(alt_u32 write_group, alt_u32 dm, alt_u32 delay)
 {
 	ALTERA_ASSERT(write_group < RW_MGR_MEM_IF_WRITE_DQS_WIDTH);
 	ALTERA_ASSERT(dm < RW_MGR_NUM_DM_PER_WRITE_GROUP);
@@ -1791,6 +1778,16 @@ void scc_mgr_apply_group_dqs_io_and_oct_out1 (alt_u32 write_group, alt_u32 delay
 	scc_mgr_load_dqs_for_write_group (write_group);
 }
 
+//USER apply and load delay on both DQS and OCT out2
+void scc_mgr_apply_group_dqs_io_and_oct_out2 (alt_u32 write_group, alt_u32 delay)
+{
+	scc_mgr_set_dqs_out2_delay(write_group, delay);
+	scc_mgr_load_dqs_io ();
+
+	scc_mgr_set_oct_out2_delay(write_group, delay);
+	scc_mgr_load_dqs_for_write_group (write_group);
+}
+
 //USER set delay on both DQS and OCT out1 by incrementally changing
 //USER the settings one dtap at a time towards the target value, to avoid
 //USER breaking the lock of the DLL/PLL on the memory device.
@@ -1810,6 +1807,33 @@ void scc_mgr_set_group_dqs_io_and_oct_out1_gradual (alt_u32 write_group, alt_u32
 	while (d < delay) {
 		++d;
 		scc_mgr_apply_group_dqs_io_and_oct_out1 (write_group, d);
+		IOWR_32DIRECT (SCC_MGR_UPD, 0, 0);
+		if (QDRII)
+		{
+			rw_mgr_mem_dll_lock_wait();
+		}
+	}	
+}
+
+//USER set delay on both DQS and OCT out2 by incrementally changing
+//USER the settings one dtap at a time towards the target value, to avoid
+//USER breaking the lock of the DLL/PLL on the memory device.
+void scc_mgr_set_group_dqs_io_and_oct_out2_gradual (alt_u32 write_group, alt_u32 delay)
+{
+	alt_u32 d = READ_SCC_DQS_IO_OUT2_DELAY();
+	
+	while (d > delay) {
+		--d;
+		scc_mgr_apply_group_dqs_io_and_oct_out2 (write_group, d);
+		IOWR_32DIRECT (SCC_MGR_UPD, 0, 0);
+		if (QDRII)
+		{
+			rw_mgr_mem_dll_lock_wait();
+		}
+	}
+	while (d < delay) {
+		++d;
+		scc_mgr_apply_group_dqs_io_and_oct_out2 (write_group, d);
 		IOWR_32DIRECT (SCC_MGR_UPD, 0, 0);
 		if (QDRII)
 		{
@@ -2134,7 +2158,8 @@ static void rw_mgr_lrdimm_rc_program(alt_u32 fscw, alt_u32 rc_addr, alt_u32 rc_v
 	// USER control words have been written, not after each one. Only F0RC0-F0RC15
 	// USER are guaranteed to be written (and in order), but F1* are not so
 	// USER wait after each.
-	if (((fscw == 0) && (rc_addr == 11)) || ((fscw == 1) && (rc_addr >= 8)))
+	if (    ((fscw == 0) && ((rc_addr==2) || (rc_addr==10) || (rc_addr==11)))
+		  || ((fscw == 1) && (rc_addr >= 8)))
 	{
 		delay_for_n_ns(6000);
 	}
@@ -2356,7 +2381,7 @@ void rw_mgr_mem_initialize (void)
 	rtt_wr  = LRDIMM_SPD_MR_RTT_WR(LRDIMM_SPD_MR);
 
 	// USER Configure LRDIMM to broadcast LRDIMM MRS commands to all ranks
-	rw_mgr_lrdimm_rc_program(0, 14, 0x9); //broadcast mode
+	rw_mgr_lrdimm_rc_program(0, 14, (((RDIMM_CONFIG_WORD_HIGH >> 24) & 0xF) & (~0x4)));
 
 	// USER Update contents of AC ROM with new RTT WR, DRV values only (NOM = Off)
 	rtt_change_MRS1_MRS2_NOM_WR(__RW_MGR_CONTENT_ac_mrs1, rtt_drv, 0, 1);
@@ -2447,7 +2472,8 @@ void rw_mgr_mem_initialize (void)
 	}
 #if LRDIMM
 	// USER Configure LRDIMM to target physical ranks decoded by RM bits only (ranks 0,1 only)
-	rw_mgr_lrdimm_rc_program(0, 14, 0xD);
+	// USER Set bit F0RC14.DBA0 to '1' so MRS commands target physical ranks only
+	rw_mgr_lrdimm_rc_program(0, 14, (((RDIMM_CONFIG_WORD_HIGH >> 24) & 0xF) | 0x4));
 	// USER update AC ROM MR1 entry to include RTT_NOM
 	rtt_change_MRS1_MRS2_NOM_WR(__RW_MGR_CONTENT_ac_mrs1, (rtt_drv|rtt_nom), 0, 1);
 	rtt_change_MRS1_MRS2_NOM_WR(__RW_MGR_CONTENT_ac_mrs1, (rtt_drv|rtt_nom), 1, 1);
@@ -2503,7 +2529,7 @@ void rw_mgr_mem_initialize (void)
 	// USER Wait for max(tcal) * number of physical ranks. Tcal is approx. 10ms.
 	for (r = 0; r < RW_MGR_MEM_NUMBER_OF_RANKS * RW_MGR_MEM_NUMBER_OF_CS_PER_DIMM; r++)
 	{
-		delay_for_n_ns(40000000UL);
+		delay_for_n_ns(80000000UL);
 	}
 #endif // !STATIC_SKIP_DELAY_LOOPS
 	// USER Place MB back in normal operating mode
@@ -3040,7 +3066,8 @@ void rw_mgr_mem_handoff (void)
 	rtt_wr  = LRDIMM_SPD_MR_RTT_WR(LRDIMM_SPD_MR);
 
 	// USER Configure LRDIMM to broadcast LRDIMM MRS commands to all ranks
-	rw_mgr_lrdimm_rc_program(0, 14, 0x9); //broadcast mode
+	// USER Set bit F0RC14.DBA0 to '0' so MRS commands target all physical ranks in a logical rank
+	rw_mgr_lrdimm_rc_program(0, 14, (((RDIMM_CONFIG_WORD_HIGH >> 24) & 0xF) & (~0x4)));
 
 	// USER Update contents of AC ROM with new RTT WR, DRV values
 	rtt_change_MRS1_MRS2_NOM_WR (__RW_MGR_CONTENT_ac_mrs1, rtt_drv, 0, 1);
@@ -3134,7 +3161,7 @@ void rw_mgr_mem_handoff (void)
 #if LRDIMM	
 	delay_for_n_mem_clocks(12);
 	// USER Set up targetted MRS commands
-	rw_mgr_lrdimm_rc_program(0, 14, 0xD);
+	rw_mgr_lrdimm_rc_program(0, 14, (((RDIMM_CONFIG_WORD_HIGH >> 24) & 0xF) | 0x4));
 	// USER update AC ROM MR1 entry to include RTT_NOM for physical ranks 0,1 only
 	rtt_change_MRS1_MRS2_NOM_WR (__RW_MGR_CONTENT_ac_mrs1, (rtt_drv|rtt_nom), 0, 1);
 	rtt_change_MRS1_MRS2_NOM_WR (__RW_MGR_CONTENT_ac_mrs1, (rtt_drv|rtt_nom), 1, 1);
@@ -3704,6 +3731,22 @@ static inline alt_u32 rw_mgr_mem_calibrate_read_test_all_ranks (alt_u32 group, a
 {
 	return rw_mgr_mem_calibrate_read_test (0, group, num_tries, all_correct, bit_chk, all_groups, 1);
 }
+
+#if ENABLE_DELAY_CHAIN_WRITE
+void rw_mgr_incr_vfifo_auto(alt_u32 grp) {
+	alt_u32 v;
+	v = vfifo_settings[grp]%VFIFO_SIZE;
+	rw_mgr_incr_vfifo(grp, &v);
+	vfifo_settings[grp] = v;
+}
+
+void rw_mgr_decr_vfifo_auto(alt_u32 grp) {
+	alt_u32 v;
+	v = vfifo_settings[grp]%VFIFO_SIZE;
+	rw_mgr_decr_vfifo(grp, &v);
+	vfifo_settings[grp] = v;
+}
+#endif // ENABLE_DELAY_CHAIN_WRITE
 
 void rw_mgr_incr_vfifo(alt_u32 grp, alt_u32 *v) {
 	//USER fiddle with FIFO 
@@ -4378,6 +4421,9 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 	}
 #endif
 	DPRINT(2, "find_dqs_en_phase: center found: vfifo=%li ptap=%lu dtap=%lu", BFM_GBL_GET(vfifo_idx), p-1, d);
+	#if ENABLE_DELAY_CHAIN_WRITE
+	vfifo_settings[grp] = v;
+	#endif // ENABLE_DELAY_CHAIN_WRITE
 	BFM_GBL_SET(dqs_enable_mid[grp].v,BFM_GBL_GET(vfifo_idx));
 	BFM_GBL_SET(dqs_enable_mid[grp].p,p-1);
 	BFM_GBL_SET(dqs_enable_mid[grp].d,d);
@@ -7877,6 +7923,7 @@ alt_u32 rw_mgr_mem_calibrate_full_test (alt_u32 min_correct, t_btfld *bit_chk, a
 
 #if ENABLE_TCL_DEBUG
 // see how far we can push a particular DQ pin before complete failure on input and output sides
+// NOTE: if ever executing a run_*_margining function outside of calibration context you must first issue IOWR_32DIRECT (PHY_MGR_MUX_SEL, 0, 1);
 void run_dq_margining (alt_u32 rank_bgn, alt_u32 write_group)
 {
 	alt_u32 test_num;
@@ -8098,6 +8145,7 @@ void run_dq_margining (alt_u32 rank_bgn, alt_u32 write_group)
 #endif
 
 #if ENABLE_TCL_DEBUG
+// NOTE: if ever executing a run_*_margining function outside of calibration context you must first issue IOWR_32DIRECT (PHY_MGR_MUX_SEL, 0, 1);
 void run_dm_margining (alt_u32 rank_bgn, alt_u32 write_group)
 {
 	alt_u32 test_status;
@@ -9151,8 +9199,12 @@ alt_u32 run_mem_calibrate(void) {
 	IOWR_32DIRECT (TRK_STALL, 0, 0);
 #endif	
 #endif
-	if (pass) {
 
+#if FAKE_CAL_FAIL
+   if (0) {
+#else
+	if (pass) {
+#endif
 		IPRINT("CALIBRATION PASSED");
 		
 		gbl->fom_in /= 2;
@@ -10068,6 +10120,7 @@ int main(void)
 	param_t my_param;
 	gbl_t my_gbl;
 	alt_u32 pass;
+	alt_u32 i;
 
 	param = &my_param;
 	gbl = &my_gbl;
@@ -10118,6 +10171,15 @@ int main(void)
 #if ENABLE_TCL_DEBUG
 	tclrpt_initialize(&my_debug_data);
 #endif
+
+   // USER Enable all ranks, groups
+   for (i = 0; i < RW_MGR_MEM_NUMBER_OF_RANKS; i++) {
+		param->skip_ranks[i] = 0;
+	}
+	for (i = 0; i < NUM_SHADOW_REGS; ++i) {
+		param->skip_shadow_regs[i] = 0;
+	}
+	param->skip_groups = 0;
 
 	IPRINT("Preparing to start memory calibration");
 

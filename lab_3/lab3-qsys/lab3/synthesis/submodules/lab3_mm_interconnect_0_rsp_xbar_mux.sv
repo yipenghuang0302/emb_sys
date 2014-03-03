@@ -1,4 +1,4 @@
-// (C) 2001-2013 Altera Corporation. All rights reserved.
+// (C) 2001-2014 Altera Corporation. All rights reserved.
 // Your use of Altera Corporation's design tools, logic functions and other 
 // software and tools, and its AMPP partner logic functions, and any output 
 // files any of the foregoing (including device programming or simulation 
@@ -30,8 +30,8 @@
 //   ARBITRATION_SHARES:  1
 //   ARBITRATION_SCHEME   "no-arb"
 //   PIPELINE_ARB:        0
-//   PKT_TRANS_LOCK:      54 (arbitration locking enabled)
-//   ST_DATA_W:           107
+//   PKT_TRANS_LOCK:      72 (arbitration locking enabled)
+//   ST_DATA_W:           123
 //   ST_CHANNEL_W:        3
 // ------------------------------------------
 
@@ -41,7 +41,7 @@ module lab3_mm_interconnect_0_rsp_xbar_mux
     // Sinks
     // ----------------------
     input                       sink0_valid,
-    input [107-1   : 0]  sink0_data,
+    input [123-1   : 0]  sink0_data,
     input [3-1: 0]  sink0_channel,
     input                       sink0_startofpacket,
     input                       sink0_endofpacket,
@@ -52,7 +52,7 @@ module lab3_mm_interconnect_0_rsp_xbar_mux
     // Source
     // ----------------------
     output                      src_valid,
-    output [107-1    : 0] src_data,
+    output [123-1    : 0] src_data,
     output [3-1 : 0] src_channel,
     output                      src_startofpacket,
     output                      src_endofpacket,
@@ -64,13 +64,13 @@ module lab3_mm_interconnect_0_rsp_xbar_mux
     input clk,
     input reset
 );
-    localparam PAYLOAD_W        = 107 + 3 + 2;
+    localparam PAYLOAD_W        = 123 + 3 + 2;
     localparam NUM_INPUTS       = 1;
     localparam SHARE_COUNTER_W  = 1;
     localparam PIPELINE_ARB     = 0;
-    localparam ST_DATA_W        = 107;
+    localparam ST_DATA_W        = 123;
     localparam ST_CHANNEL_W     = 3;
-    localparam PKT_TRANS_LOCK   = 54;
+    localparam PKT_TRANS_LOCK   = 72;
 
 	assign	src_valid			=  sink0_valid;
 	assign	src_data			=  sink0_data;
