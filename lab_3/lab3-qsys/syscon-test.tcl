@@ -45,7 +45,7 @@ puts "Opened master"
 
 # Write a test pattern to the various registers
 foreach {r v} {0 0x0168 1 0x01E0} {
-    master_write_8 $m [expr $vga_ball + $r] $v
+    master_write_16 $m [expr $vga_ball + $r] $v
 }
 
 close_service master $m
