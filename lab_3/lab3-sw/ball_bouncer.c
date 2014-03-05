@@ -50,7 +50,7 @@ int main()
 
 	/* Hardcoding an initial slope of -1/2 for the line describing the motion of the ball */
 	int xdirection = 2;
-	int ydirection = 1;
+	int ydirection = 3;
 
 	//Start at center of screen
   short x = 240;
@@ -74,19 +74,19 @@ int main()
 
 	/* Main ball movement section */
 
-  for (i = 0 ; i < 24 ; i++) {
+  for (; ;)  {
 		x += xdirection;
 		y += ydirection;
 
 		//Check if we've reached the edge of the screen
-		if (y + RADIUS == 480 || y - RADIUS == 0){
+		if (y + RADIUS >= 640 || y - RADIUS <= 0){
 			ydirection = -ydirection;
 		}
-		if (x + RADIUS == 640 || x - RADIUS == 0){
+		if (x + RADIUS >= 480 || x - RADIUS <= 0){
 			xdirection = -xdirection;
 		}
 		write_coordinates(x, y);
-		usleep(200000);
+		usleep(10000);
   }
   
   printf("VGA ball Userspace program terminating\n");

@@ -53,7 +53,7 @@ struct vga_ball_dev {
 static void write_coordinate(u16 x, u16 y)
 {
 	iowrite16(x, dev.virtbase);
-	iowrite16(y, dev.virtbase+1);
+	iowrite16(y, dev.virtbase+2);
 	dev.x = x;
 	dev.y = y;
 }
@@ -72,7 +72,7 @@ static long vga_ball_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		if (copy_from_user(&vla, (vga_ball_arg_t *) arg,
 				   sizeof(vga_ball_arg_t)))
 			return -EACCES;
-		if (vla.x > 640 || vla.y > 480 || vla.x < 0 || vla.y < 0)
+		if (vla.y > 640 || vla.x > 480 || vla.x < 0 || vla.y < 0)
 			return -EINVAL;
 		write_coordinate(vla.x, vla.y);
 		break;
@@ -81,8 +81,6 @@ static long vga_ball_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 		if (copy_from_user(&vla, (vga_ball_arg_t *) arg,
 				   sizeof(vga_ball_arg_t)))
 			return -EACCES;
-		if (vla.x > 640 || vla.y > 480 || vla.x < 0 || vla.y < 0)
-			return -EINVAL;
 		vla.x = dev.x;
 		vla.y = dev.y;
 		if (copy_to_user((vga_ball_arg_t *) arg, &vla,
