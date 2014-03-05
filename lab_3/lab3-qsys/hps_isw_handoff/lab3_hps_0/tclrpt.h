@@ -128,57 +128,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Enable/disable non-destructive calibration
 #define TCLDBG_SET_NON_DESTRUCTIVE_CALIBRATION 24
 
-#if ENABLE_DELAY_CHAIN_WRITE
-// Set DQ D1 Delay (I/O buffer to input register)
-#define TCLDBG_SET_DQ_D1_DELAY 25
-
-// Set DQ D5 Delay (output register to I/O buffer)
-#define TCLDBG_SET_DQ_D5_DELAY 26
-
-// Set DQ D6 Delay (output register to I/O buffer)
-#define TCLDBG_SET_DQ_D6_DELAY 27
-
-// Set DQS D4 Delay (DQS delay chain)
-#define TCLDBG_SET_DQS_D4_DELAY 28
-
-// Set DQS DQ Output Phase (deg)
-#define TCLDBG_SET_DQDQS_OUTPUT_PHASE 29
-
-// Set DQS D5 Delay (output register to I/O buffer)
-#define TCLDBG_SET_DQS_D5_DELAY 30
-
-// Set DQS D6 Delay (output register to I/O buffer)
-#define TCLDBG_SET_DQS_D6_DELAY 31
-
-// Set DQS DQS Enable Phase (deg)
-#define TCLDBG_SET_DQS_EN_PHASE 32
-
-// Set DQS T11 Delay (DQS post-amble delay)
-#define TCLDBG_SET_DQS_T11_DELAY 33
-
-// Set DM D5 Delay (output register to I/O buffer)
-#define TCLDBG_SET_DM_D5_DELAY 34
-
-// Set DM D6 Delay (output register to I/O buffer)
-#define TCLDBG_SET_DM_D6_DELAY 35
-
-// Rerun DQ margining without calibrating
-#define TCLDBG_REMARGIN_DQ 36
-
-// Rerun DM margining without calibrating
-#define TCLDBG_REMARGIN_DM 37
-
-// Increment VFIFO
-#define TCLDBG_INCR_VFIFO 38
-
-// Decrement VFIFO
-#define TCLDBG_DECR_VFIFO 39
-
-// Select shadow register
-#define TCLDBG_SELECT_SHADOW_REG 40
-
-#endif // ENABLE_DELAY_CHAIN_WRITE
-
 //*****************************************************************************
 // TCL RX Status Codes
 //*****************************************************************************
@@ -204,7 +153,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TCLDBG_TX_STATUS_ILLEGAL_CMD 2
 
 // TX interface response ready
-#define TCLDBG_TX_STATUS_RESPONSE_READY 3
+#define TCLDBG_TX_STATUS_RESPOSE_READY 3
 
 
 

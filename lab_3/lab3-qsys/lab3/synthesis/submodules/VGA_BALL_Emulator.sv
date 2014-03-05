@@ -37,8 +37,8 @@ module VGA_BALL_Emulator(
              VBACK_PORCH  = 10'd 33,
              VTOTAL       = VACTIVE + VFRONT_PORCH + VSYNC + VBACK_PORCH; //525
 
-   logic [10:0]			     hcount; // Horizontal counter
-   logic 			     endOfLine;
+   logic [10:0]	hcount; // Horizontal counter only hcount[10:1] is used for colomn counting
+   logic	endOfLine;
    
    always_ff @(posedge clk50 or posedge reset)
      if (reset)          hcount <= 0;
@@ -59,9 +59,9 @@ module VGA_BALL_Emulator(
 
    assign endOfField = vcount == VTOTAL - 1;
 
-   // Horizontal sync: from 0x520 to 0x57F
-   // 101 0010 0000 to 101 0111 1111
-   assign VGA_HS = !( (hcount[10:7] == 4'b1010) & (hcount[6] | hcount[5]));
+   // Horizontal sync: from 0x520 to 0x5DF (0x57F)
+   // 101 0010 0000 to 101 1101 1111
+   assign VGA_HS = !( (hcount[10:8] == 3'b101) & !(hcount[7:5]==3'b111));
    assign VGA_VS = !( vcount[9:1] == (VACTIVE + VFRONT_PORCH) / 2);
 
    assign VGA_SYNC_n = 1; // For adding sync to video signals; not used for VGA
@@ -72,20 +72,21 @@ module VGA_BALL_Emulator(
    assign VGA_BLANK_n = !( hcount[10] & (hcount[9] | hcount[8]) ) &
 			!( vcount[9] | (vcount[8:5] == 4'b1111) );   
 
-	logic [11:0] vpixel;
-	adder_12 vpixel_sub (
-		.add_sub ( 1'b0 ), //sub
-		.clock ( clk50 ),
-		.dataa ( {1'b0,1'b0,vcount} ),
-		.datab ( {1'b0,VFRONT_PORCH + VSYNC + VBACK_PORCH} ),
-		.result ( vpixel )
-	);
+	// logic [11:0] vpixel;
+	// adder_12 vpixel_sub (
+	// 	.add_sub ( 1'b0 ), //sub
+	// 	.clock ( clk50 ),
+	// 	.dataa ( {1'b0,1'b0,vcount} ),
+	// 	.datab ( {1'b0,VFRONT_PORCH + VSYNC + VBACK_PORCH} ),
+	// 	.result ( vpixel )
+	// );
 
 	logic [11:0] vdelta;
 	adder_12 vdelta_sub (
 		.add_sub ( 1'b0 ), //sub
 		.clock ( clk50 ),
-		.dataa ( vpixel ),
+		// .dataa ( vpixel ),
+		.dataa ( {1'b0,1'b0,vcount} ),
 		.datab ( {1'b0,1'b0,1'b0,vpos} ),
 		.result ( vdelta )
 	);
@@ -97,20 +98,21 @@ module VGA_BALL_Emulator(
 		.result ( vsquare )
 	);
 
-	logic [11:0] hpixel;
-	adder_12 hpixel_sub (
-		.add_sub ( 1'b0 ), //sub
-		.clock ( clk50 ),
-		.dataa ( {1'b0,hcount} ),
-		.datab ( {1'b0,HFRONT_PORCH + HSYNC + HBACK_PORCH} ),
-		.result ( hpixel )
-	);
+	// logic [11:0] hpixel;
+	// adder_12 hpixel_sub (
+	// 	.add_sub ( 1'b0 ), //sub
+	// 	.clock ( clk50 ),
+	// 	.dataa ( {1'b0,hcount} ),
+	// 	.datab ( {1'b0,HFRONT_PORCH + HSYNC + HBACK_PORCH} ),
+	// 	.result ( hpixel )
+	// );
 
 	logic [11:0] hdelta;
 	adder_12 hdelta_sub (
 		.add_sub ( 1'b0 ), //sub
 		.clock ( clk50 ),
-		.dataa ( {1'b0,hpixel[10:1]} ), // divide hpixel by 2
+		// .dataa ( {1'b0,hpixel[10:1]} ), // divide hpixel by 2
+		.dataa ( {1'b0,1'b0,hcount[10:1]} ), // divide hpixel by 2
 		.datab ( {1'b0,1'b0,hpos} ),
 		.result ( hdelta )
 	);
@@ -147,7 +149,15 @@ module VGA_BALL_Emulator(
 		.result ( diff )
 	);
 
-	assign VGA_CLK = hcount[0]; // 25 MHz clock: pixel latched on rising edge
+   // VGA_CLK is 25 MHz
+   /*            __    __    __
+    *clk50    __|  |__|  |__|
+    *        
+    *            _____       __
+    *hcount[0]__|     |_____|
+    *          
+    */
+   assign VGA_CLK = hcount[0]; // 25 MHz clock: pixel latched on rising edge
 
 	// diff[23] == 1 iff rsquare > square_sum
 	always_comb begin

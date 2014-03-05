@@ -1,6 +1,6 @@
 Assembler report for SoCKit_Top
-Mon Mar  3 16:54:39 2014
-Quartus II 32-bit Version 13.1.3 Build 178 02/12/2014 SJ Web Edition
+Tue Mar  4 20:40:12 2014
+Quartus II 32-bit Version 13.1.1 Build 166 11/26/2013 SJ Full Version
 
 
 ---------------------
@@ -19,7 +19,7 @@ Quartus II 32-bit Version 13.1.3 Build 178 02/12/2014 SJ Web Edition
 ----------------
 ; Legal Notice ;
 ----------------
-Copyright (C) 1991-2014 Altera Corporation
+Copyright (C) 1991-2013 Altera Corporation
 Your use of Altera Corporation's design tools, logic functions 
 and other software and tools, and its AMPP partner logic 
 functions, and any output files from any of the foregoing 
@@ -38,7 +38,7 @@ applicable agreement for further details.
 +---------------------------------------------------------------+
 ; Assembler Summary                                             ;
 +-----------------------+---------------------------------------+
-; Assembler Status      ; Successful - Mon Mar  3 16:54:39 2014 ;
+; Assembler Status      ; Successful - Tue Mar  4 20:40:12 2014 ;
 ; Revision Name         ; SoCKit_Top                            ;
 ; Top-level Entity Name ; SoCKit_Top                            ;
 ; Family                ; Cyclone V                             ;
@@ -102,8 +102,8 @@ applicable agreement for further details.
 ; Option         ; Setting                 ;
 +----------------+-------------------------+
 ; Device         ; 5CSXFC6D6F31C8ES        ;
-; JTAG usercode  ; 0x00D0E250              ;
-; Checksum       ; 0x00D0E250              ;
+; JTAG usercode  ; 0x00CF9ECE              ;
+; Checksum       ; 0x00CF9ECE              ;
 +----------------+-------------------------+
 
 
@@ -112,17 +112,17 @@ applicable agreement for further details.
 +--------------------+
 Info: *******************************************************************
 Info: Running Quartus II 32-bit Assembler
-    Info: Version 13.1.3 Build 178 02/12/2014 SJ Web Edition
-    Info: Processing started: Mon Mar  3 16:54:13 2014
+    Info: Version 13.1.1 Build 166 11/26/2013 SJ Full Version
+    Info: Processing started: Tue Mar  4 20:39:43 2014
 Info: Command: quartus_asm --read_settings_files=off --write_settings_files=off lab3 -c SoCKit_Top
 Info (115030): Assembler is generating device programming files
 Warning (11713): The configuration of the Hard Processor Subsystem (HPS) within this design has changed.
 The Preloader software that initializes the HPS requires an update.
 Using hps_isw_handoff/lab3_hps_0/, run the Preloader Support Package Generator to update your Preloader software
 Info: Quartus II 32-bit Assembler was successful. 0 errors, 1 warning
-    Info: Peak virtual memory: 511 megabytes
-    Info: Processing ended: Mon Mar  3 16:54:39 2014
-    Info: Elapsed time: 00:00:26
-    Info: Total CPU time (on all processors): 00:00:26
+    Info: Peak virtual memory: 506 megabytes
+    Info: Processing ended: Tue Mar  4 20:40:12 2014
+    Info: Elapsed time: 00:00:29
+    Info: Total CPU time (on all processors): 00:00:27
 
 

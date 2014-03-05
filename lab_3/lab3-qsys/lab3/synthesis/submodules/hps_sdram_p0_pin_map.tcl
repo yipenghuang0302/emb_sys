@@ -1,4 +1,4 @@
-# (C) 2001-2014 Altera Corporation. All rights reserved.
+# (C) 2001-2013 Altera Corporation. All rights reserved.
 # Your use of Altera Corporation's design tools, logic functions and other 
 # software and tools, and its AMPP partner logic functions, and any output 
 # files any of the foregoing (including device programming or simulation 
@@ -1151,7 +1151,7 @@ proc hps_sdram_p0_get_rzq_pins { instname all_rzq_pins } {
 	set_project_mode -always_show_entity_name qsf
 	set rzqpins $rzq_pins
 }
-# (C) 2001-2014 Altera Corporation. All rights reserved.
+# (C) 2001-2013 Altera Corporation. All rights reserved.
 # Your use of Altera Corporation's design tools, logic functions and other 
 # software and tools, and its AMPP partner logic functions, and any output 
 # files any of the foregoing (including device programming or simulation 

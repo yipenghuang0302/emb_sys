@@ -618,22 +618,6 @@ extern void rw_mgr_load_mrs_calib (void);
 extern void rw_mgr_load_mrs_exec (void);
 extern void rw_mgr_mem_initialize (void);
 extern void rw_mgr_mem_dll_lock_wait(void);
-extern inline void scc_mgr_set_dq_in_delay (alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay);
-extern inline void scc_mgr_set_dq_out1_delay (alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay);
-extern inline void scc_mgr_set_dq_out2_delay (alt_u32 write_group, alt_u32 dq_in_group, alt_u32 delay);
-extern inline void scc_mgr_load_dq (alt_u32 dq_in_group);
-extern inline void scc_mgr_set_dqs_bus_in_delay (alt_u32 read_group, alt_u32 delay);
-extern inline void scc_mgr_load_dqs (alt_u32 dqs);
-extern void scc_mgr_set_group_dqs_io_and_oct_out1_gradual (alt_u32 write_group, alt_u32 delay);
-extern void scc_mgr_set_group_dqs_io_and_oct_out2_gradual (alt_u32 write_group, alt_u32 delay);
-extern void scc_mgr_set_dqs_en_delay_all_ranks (alt_u32 read_group, alt_u32 delay);
-extern void scc_mgr_set_dqs_en_phase_all_ranks (alt_u32 read_group, alt_u32 phase);
-extern void scc_mgr_set_dqdqs_output_phase_all_ranks (alt_u32 write_group, alt_u32 phase);
-extern inline void scc_mgr_set_dm_out1_delay (alt_u32 write_group, alt_u32 dm, alt_u32 delay);
-extern inline void scc_mgr_set_dm_out2_delay (alt_u32 write_group, alt_u32 dm, alt_u32 delay);
-extern inline void scc_mgr_load_dm (alt_u32 dm);
-extern void rw_mgr_incr_vfifo_auto(alt_u32 grp);
-extern void rw_mgr_decr_vfifo_auto(alt_u32 grp);
 #if HPS_HW
 extern int sdram_calibration(void);
 #endif

@@ -5,9 +5,7 @@
 		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|VGA_BALL:vga_ball_0|VGA_BALL_Emulator:ball_emulator|mult_12:vsquare_mult|altsquare:altsquare_component" CBX_FILE_NAME="altsquare_2he.tdf"/>
 		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|lab3_hps_0:hps_0|lab3_hps_0_hps_io:hps_io|lab3_hps_0_hps_io_border:border|hps_sdram:hps_sdram_inst|hps_sdram_p0:p0|hps_sdram_p0_acv_hard_memphy:umemphy|hps_sdram_p0_acv_hard_io_pads:uio_pads|hps_sdram_p0_acv_hard_addr_cmd_pads:uaddr_cmd_pads|altddio_out:clock_gen[0].umem_ck_pad" CBX_FILE_NAME="ddio_out_uqe.tdf"/>
 		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|VGA_BALL:vga_ball_0|VGA_BALL_Emulator:ball_emulator|adder_12:hdelta_sub|lpm_add_sub:LPM_ADD_SUB_component" CBX_FILE_NAME="add_sub_g7i.tdf"/>
-		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|VGA_BALL:vga_ball_0|VGA_BALL_Emulator:ball_emulator|adder_12:hpixel_sub|lpm_add_sub:LPM_ADD_SUB_component" CBX_FILE_NAME="add_sub_g7i.tdf"/>
 		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|VGA_BALL:vga_ball_0|VGA_BALL_Emulator:ball_emulator|adder_12:vdelta_sub|lpm_add_sub:LPM_ADD_SUB_component" CBX_FILE_NAME="add_sub_g7i.tdf"/>
-		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|VGA_BALL:vga_ball_0|VGA_BALL_Emulator:ball_emulator|adder_12:vpixel_sub|lpm_add_sub:LPM_ADD_SUB_component" CBX_FILE_NAME="add_sub_g7i.tdf"/>
 		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|VGA_BALL:vga_ball_0|VGA_BALL_Emulator:ball_emulator|adder_24:diff_sub|lpm_add_sub:LPM_ADD_SUB_component" CBX_FILE_NAME="add_sub_j7i.tdf"/>
 		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|lab3_master_0:master_0|altera_avalon_sc_fifo:fifo|altsyncram:mem_rtl_0" CBX_FILE_NAME="altsyncram_g0n1.tdf"/>
 		<CBX_INST_ENTRY INSTANCE_NAME="|SoCKit_Top|lab3:u0|VGA_BALL:vga_ball_0|VGA_BALL_Emulator:ball_emulator|adder_24:square_sum_add|lpm_add_sub:LPM_ADD_SUB_component" CBX_FILE_NAME="add_sub_j7i.tdf"/>

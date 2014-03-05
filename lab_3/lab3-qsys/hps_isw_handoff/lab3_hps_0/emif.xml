@@ -29,7 +29,6 @@
         <define name="DM_PINS_ENABLED" value="1"/>
         <define name="ENABLE_ASSERT" value="0"/>
         <define name="ENABLE_BRINGUP_DEBUGGING" value="0"/>
-        <define name="ENABLE_DELAY_CHAIN_WRITE" value="0"/>
         <define name="ENABLE_DQS_IN_CENTERING" value="1"/>
         <define name="ENABLE_DQS_OUT_CENTERING" value="0"/>
         <define name="ENABLE_EXPORT_SEQ_DEBUG_BRIDGE" value="0"/>
@@ -38,7 +37,6 @@
         <define name="ENABLE_NON_DESTRUCTIVE_CALIB" value="0"/>
         <define name="ENABLE_SUPER_QUICK_CALIBRATION" value="0"/>
         <define name="ENABLE_TCL_DEBUG" value="0"/>
-        <define name="FAKE_CAL_FAIL" value="0"/>
         <define name="FULL_RATE" value="1"/>
         <define name="GUARANTEED_READ_BRINGUP_TEST" value="0"/>
         <define name="HALF_RATE" value="0"/>
